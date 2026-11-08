@@ -1,0 +1,140 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/rules#> .
+@prefix amx:  <https://example.org/amltrix/> .
+
+# T0039 Circular Transactions: structural reading of indicator IND02191 only (step 1 of the SHACL work).
+# Derived from the draft in AML Triage `ontology/examples/circular_transactions.shapes.ttl`; that file is not changed.
+#
+# What the AML typology says (AMLTRIX-derived text, attribution kept in the pages):
+#   IND02191: "Cyclical patterns in funds or asset transfers that ultimately revert to the same origin across
+#              multiple accounts or entities, lacking a legitimate business rationale."
+# AMLTRIX has no rules. Each constraint below is tagged with where it comes from:
+#   [text]   close to the words of the indicator
+#   [read]   our reading of the words
+#   [added]  a decision of this project, not in the typology
+# Every message starts with "[rule_id]" so that code can map a violation to a rule.
+#
+# Changes against the AML Triage draft:
+#   - the leg carries ex:amountLog (data has only a logarithm of the amount) and only needs a value; the "amount > 0" rule is dropped
+#   - no minimum number of legs and no "each account pays once": the typology gives no number (decision 2026-11-08);
+#     "multiple accounts" is read as more than one account
+#   - rule ids added to every message
+# Business rationale: the shape cannot decide it; it can only warn when a record claims one.
+
+ex: sh:declare [ sh:prefix "ex" ; sh:namespace "https://example.org/rules#"^^xsd:anyURI ] .
+
+# ---------------------------------------------------------------- one leg
+ex:LegShape a sh:NodeShape ;
+    sh:targetClass ex:Leg ;
+    sh:property [ sh:path ex:seq ; sh:datatype xsd:integer ; sh:minInclusive 1 ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "[leg_complete] A leg needs its position in the chain (ex:seq, an integer from 1)." ] ;
+    sh:property [ sh:path ex:from ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "[leg_complete] A leg needs exactly one paying account." ] ;
+    sh:property [ sh:path ex:to ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "[leg_complete] A leg needs exactly one receiving account." ] ;
+    sh:property [ sh:path ex:at ; sh:datatype xsd:dateTime ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "[leg_complete] A leg needs one timestamp." ] ;
+    sh:property [ sh:path ex:amountLog ; sh:datatype xsd:double ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "[leg_complete] A leg needs one amountLog value (a logarithm of the amount; the data has no raw amount)." ] ;
+    # optional: is the leg between two accounts at the same bank (used by IND02195 only)
+    sh:property [ sh:path ex:sameBank ; sh:datatype xsd:boolean ; sh:maxCount 1 ;
+                  sh:message "[leg_complete] A leg has at most one sameBank value." ] .
+
+# ---------------------------------------------------------------- the loop as a whole
+ex:CircularTransactionShape a sh:NodeShape ;
+    sh:targetClass ex:LoopCandidate ;
+    ex:implementsTechnique amx:T0039 ;     # Circular Transactions
+    ex:implementsIndicator amx:IND02191 ;
+    ex:underTactic         amx:ML.TA0007 ; # Layering
+    rdfs:comment "Structural reading of IND02191. It cannot judge intent: whether the cycle lacks a business rationale is for the investigator." ;
+
+    sh:property [ sh:path ex:origin ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "[origin_named] A loop candidate names the account where the funds start (ex:origin)." ] ;
+
+    # [text] "revert to the same origin": first leg starts at the origin, last leg ends there
+    sh:sparql [
+        a sh:SPARQLConstraint ; sh:prefixes ex: ;
+        sh:message "[first_leg_starts_at_origin] The first leg must start at the origin account." ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this ex:origin ?o ; ex:leg ?l .
+                ?l ex:seq 1 ; ex:from ?value .
+                FILTER (?value != ?o)
+            }""" ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ; sh:prefixes ex: ;
+        sh:message "[last_leg_returns_to_origin] The last leg must end at the origin account: the funds must return to where they started." ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this ex:origin ?o ; ex:leg ?last .
+                ?last ex:seq ?s ; ex:to ?value .
+                FILTER NOT EXISTS { $this ex:leg ?later . ?later ex:seq ?s2 . FILTER (?s2 > ?s) }
+                FILTER (?value != ?o)
+            }""" ] ;
+
+    # [read] "cyclical pattern": each leg pays from the account the previous leg paid to
+    sh:sparql [
+        a sh:SPARQLConstraint ; sh:prefixes ex: ;
+        sh:message "[consecutive_legs_connect] Consecutive legs must connect: a leg starts at the account the previous leg paid to." ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this ex:leg ?a , ?b .
+                ?a ex:seq ?s1 ; ex:to ?value .
+                ?b ex:seq ?s2 ; ex:from ?f .
+                FILTER (?s2 = ?s1 + 1 && ?value != ?f)
+            }""" ] ;
+
+    # [added] the funds move forward in time (equal timestamps pass: the data has minute resolution; ties are ordered by tx_id before this check)
+    sh:sparql [
+        a sh:SPARQLConstraint ; sh:prefixes ex: ;
+        sh:message "[legs_in_time_order] Legs must be in time order: a leg cannot happen before the one it follows." ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this ex:leg ?a , ?b .
+                ?a ex:seq ?s1 ; ex:at ?t1 .
+                ?b ex:seq ?s2 ; ex:at ?value .
+                FILTER (?s2 = ?s1 + 1 && ?value < ?t1)
+            }""" ] ;
+
+    # [read] "across multiple accounts": the pattern involves more than one account. The typology gives no number, so no
+    # minimum number of legs and no limit on how often an account pays (decision 2026-11-08, replaces "at least 3 legs").
+    sh:sparql [
+        a sh:SPARQLConstraint ; sh:prefixes ex: ;
+        sh:message "[at_least_2_accounts] A loop must involve more than one account." ;
+        sh:select """
+            SELECT $this WHERE {
+                { $this ex:leg ?l . ?l ex:from ?a } UNION { $this ex:leg ?l . ?l ex:to ?a }
+            } GROUP BY $this HAVING (COUNT(DISTINCT ?a) < 2)""" ] ;
+
+    # [text] "lacking a legitimate business rationale": not decidable here; warn if a record claims one
+    sh:property [ sh:path ex:documentedRationale ; sh:maxCount 0 ; sh:severity sh:Warning ;
+                  sh:message "[business_rationale_recorded] A business rationale is recorded for this cycle. IND02191 describes cycles that lack one: review before treating it as a match." ] .
+
+# ================================================================ IND02195 (facts only)
+# AML typology text:
+#   "Frequent cross-border inter-bank transfers involving convoluted routing paths, including multiple hops in
+#    high-risk or offshore jurisdictions, lacking clear business justification."
+# The text gives no number for "multiple hops" and no test for "convoluted", so this project sets NO threshold and gives no
+# held / not held verdict for IND02195. src/indicators.py reports facts about the candidate: the number of hops (legs) and how
+# many legs go between banks (ex:sameBank = false). The investigator judges.
+# Not answerable from this data, and the answer must say so: "cross-border" and "high-risk or offshore jurisdictions" (the data
+# has no country; between banks is not cross-border), "frequent" (needs counting over many routes), "business justification".
+# The only rule here is about missing data, not about the pattern: a violation of route_bank_known means "bank information
+# missing, between-bank count not available".
+ex:ConvolutedRoutingShape a sh:NodeShape ;
+    sh:targetClass ex:LoopCandidate ;
+    ex:implementsTechnique amx:T0039 ;
+    ex:implementsIndicator amx:IND02195 ;
+    ex:underTactic         amx:ML.TA0007 ;
+    rdfs:comment "Partial reading of IND02195: reports hops and between-bank legs, no threshold, no verdict." ;
+
+    sh:sparql [
+        a sh:SPARQLConstraint ; sh:prefixes ex: ;
+        sh:message "[route_bank_known] A leg has no sameBank value: whether it goes between banks cannot be reported." ;
+        sh:select """
+            SELECT $this ?value WHERE {
+                $this ex:leg ?value .
+                FILTER NOT EXISTS { ?value ex:sameBank ?b }
+            }""" ] .

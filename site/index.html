@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinCrime Semantic Layer</title>
+<meta name="description" content="Why a semantic layer matters for AI in financial crime (context and deductive reasoning), and an interactive demo of it, from data to investigation.">
+<link rel="stylesheet" href="style.css?v=83bfdf15">
+</head>
+<body>
+<header>
+  <h1>FinCrime Semantic Layer</h1>
+  <p class="intro">The FinCrime semantic layer is the shared, machine-readable vocabulary of financial crime: typologies and risk indicators, alerts, cases and findings,
+    the data sources that evidence them, how they relate, and the rules a valid record must follow. AI agents need it: it gives them <b>context</b>, so a term means the same
+    to every system and agent, and it supports <b>deductive reasoning</b>, because explicit relations and rules let a conclusion be derived and checked rather than guessed.
+    This demo shows it in use: the model reads and writes, the semantic layer supplies the context and the rules, and code checks the model against them.
+    Click an Agent for four scenarios on one synthetic transaction.</p>
+</header>
+<main id="app"><p class="muted">Loading…</p></main>
+<footer id="footer"></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
+<script src="util.js?v=f7bc726b"></script>
+<script src="items.js?v=70f81d85"></script>
+<script src="onto.js?v=bf6638c3"></script>
+<script src="other.js?v=81cc8b95"></script>
+<script src="app.js?v=476b3728"></script>
+</body>
+</html>

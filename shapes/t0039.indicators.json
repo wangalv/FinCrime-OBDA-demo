@@ -1,0 +1,261 @@
+{
+  "technique": "T0039",
+  "name": "Circular Transactions",
+  "alt_names": [
+    "Carouseling Trade Transactions"
+  ],
+  "tactic": {
+    "ref": "ML.TA0007",
+    "name": "Layering"
+  },
+  "source": "Derived from AMLTRIX 1.0-beta.4 by UAB Amlyze (https://framework.amltrix.com), used under the AMLTRIX License Terms. Not endorsed by AMLTRIX. Derivative works must keep this attribution and be distributed under the same terms.",
+  "status": "DRAFT by Claude, 2026-11-08. Not reviewed by the user or a domain expert. 'needs', 'data_sources' per indicator and 'rules' are Claude's reading; AMLTRIX links data sources to the technique, not to each indicator.",
+  "how_status_is_decided": "src/indicators.py: an indicator is 'answerable' when every term in 'needs' exists in mapping/tx_ontology.ttl, 'partial' when some do, 'unanswerable' when none do. Rules named in 'data_rules' report 'cannot check' when violated, not 'does not hold'. Indicators with mode 'facts_only' get state 'facts_only' and a 'facts' block instead of held / not held.",
+  "data_sources": {
+    "DS0019": {
+      "name": "Transaction Logs",
+      "here": "yes"
+    },
+    "DS0047": {
+      "name": "Correspondent and Cross-Border Transaction Data",
+      "here": "partial",
+      "note": "only is_same_bank; no intermediary banks, routes or jurisdictions"
+    },
+    "DS0004": {
+      "name": "Customs and Border Records",
+      "here": "no"
+    },
+    "DS0013": {
+      "name": "Contractual and Invoice Data",
+      "here": "no"
+    },
+    "DS0030": {
+      "name": "Business Activity and Operations",
+      "here": "no"
+    },
+    "DS0036": {
+      "name": "Trade Documentation",
+      "here": "no"
+    },
+    "DS0039": {
+      "name": "KYC & Customer Due Diligence Records",
+      "here": "partial",
+      "note": "synthetic kyc_profiles: customer type, industry, tenure, PEP, risk rating, used only as account context; no beneficial ownership, no account relationships, no addresses"
+    },
+    "DS0049": {
+      "name": "Company & Beneficial Ownership Registries",
+      "here": "no"
+    }
+  },
+  "mitigations_not_modelled": [
+    "M0002",
+    "M0004",
+    "M0021",
+    "M0024",
+    "M0026"
+  ],
+  "indicators": [
+    {
+      "id": "IND02191",
+      "text": "Cyclical patterns in funds or asset transfers that ultimately revert to the same origin across multiple accounts or entities, lacking a legitimate business rationale.",
+      "m0_mark": "yes",
+      "data_sources": [
+        "DS0019"
+      ],
+      "needs": [
+        "fcd:Transaction",
+        "fcd:fromAccount",
+        "fcd:toAccount",
+        "fcd:timestamp"
+      ],
+      "shape": "ex:CircularTransactionShape",
+      "shape_status": "runnable, checked against 19 gold cases",
+      "rules": [
+        "origin_named",
+        "first_leg_starts_at_origin",
+        "last_leg_returns_to_origin",
+        "consecutive_legs_connect",
+        "legs_in_time_order",
+        "at_least_2_accounts",
+        "business_rationale_recorded"
+      ],
+      "data_rules": [],
+      "not_checked": [
+        "lacking a legitimate business rationale (only a Warning if a record claims one)"
+      ]
+    },
+    {
+      "id": "IND02195",
+      "text": "Frequent cross-border inter-bank transfers involving convoluted routing paths, including multiple hops in high-risk or offshore jurisdictions, lacking clear business justification.",
+      "m0_mark": "partial",
+      "data_sources": [
+        "DS0019",
+        "DS0047"
+      ],
+      "needs": [
+        "fcd:Transaction",
+        "fcd:sameBank",
+        "fcd:Jurisdiction"
+      ],
+      "shape": "ex:ConvolutedRoutingShape",
+      "shape_status": "facts only: no threshold and no verdict (the typology gives no number for 'multiple hops'); the shape holds one data-availability rule",
+      "rules": [
+        "route_bank_known"
+      ],
+      "data_rules": [
+        "route_bank_known"
+      ],
+      "not_checked": [
+        "cross-border (the data has no country; between banks is not cross-border)",
+        "high-risk or offshore jurisdictions",
+        "frequent (needs counting over many routes)",
+        "lacking clear business justification"
+      ],
+      "mode": "facts_only",
+      "reports": [
+        "hops: number of legs",
+        "interbank_legs: legs with sameBank = false, out of the hops"
+      ]
+    },
+    {
+      "id": "IND02192",
+      "text": "Multiple intra-group and inter-company transfers with minimal or no supporting documentation or economic justification.",
+      "m0_mark": "no",
+      "data_sources": [
+        "DS0013",
+        "DS0049"
+      ],
+      "needs": [
+        "fcd:CompanyGroup",
+        "fcd:SupportingDocument"
+      ],
+      "shape": "ex:IND02192Skeleton",
+      "shape_status": "skeleton",
+      "rules": [],
+      "data_rules": [],
+      "not_checked": [
+        "no group structure, no documents"
+      ]
+    },
+    {
+      "id": "IND02193",
+      "text": "Repeated use of identical VAT invoices or tax reclaim documents across multiple transactions without evidence of corresponding goods or services.",
+      "m0_mark": "no",
+      "data_sources": [
+        "DS0013"
+      ],
+      "needs": [
+        "fcd:Invoice",
+        "fcd:Shipment"
+      ],
+      "shape": "ex:IND02193Skeleton",
+      "shape_status": "skeleton",
+      "rules": [],
+      "data_rules": [],
+      "not_checked": [
+        "no invoices"
+      ]
+    },
+    {
+      "id": "IND02194",
+      "text": "Frequent formation or acquisition of legal entities with no apparent operational presence, coupled with repeated changes in beneficial ownership.",
+      "m0_mark": "no",
+      "data_sources": [
+        "DS0039",
+        "DS0049"
+      ],
+      "needs": [
+        "fcd:LegalEntity",
+        "fcd:BeneficialOwnerChange"
+      ],
+      "shape": "ex:IND02194Skeleton",
+      "shape_status": "skeleton",
+      "rules": [],
+      "data_rules": [],
+      "not_checked": [
+        "no entity or ownership data"
+      ]
+    },
+    {
+      "id": "IND02196",
+      "text": "Significant discrepancies between reported trade volumes and actual business operations, such as low-activity companies handling disproportionately large transaction volumes.",
+      "m0_mark": "no",
+      "data_sources": [
+        "DS0030",
+        "DS0019"
+      ],
+      "needs": [
+        "fcd:DeclaredBusinessActivity",
+        "fcd:amountRaw"
+      ],
+      "shape": "ex:IND02196Skeleton",
+      "shape_status": "skeleton",
+      "rules": [],
+      "data_rules": [],
+      "not_checked": [
+        "no declared operations; only a logarithm of the amount"
+      ]
+    },
+    {
+      "id": "IND02197",
+      "text": "Detectable circular trade patterns in shipping and invoicing records, including repetitive shipments of identical goods and mismatched invoice values or inconsistent documentation.",
+      "m0_mark": "no",
+      "data_sources": [
+        "DS0036",
+        "DS0004",
+        "DS0013"
+      ],
+      "needs": [
+        "fcd:Shipment",
+        "fcd:Invoice"
+      ],
+      "shape": "ex:IND02197Skeleton",
+      "shape_status": "skeleton",
+      "rules": [],
+      "data_rules": [],
+      "not_checked": [
+        "no shipping or invoice records"
+      ]
+    },
+    {
+      "id": "IND02198",
+      "text": "Frequent establishment and dissolution of trading entities, alongside repeated changes to account or ownership details, all lacking transparent operational explanations.",
+      "m0_mark": "no",
+      "data_sources": [
+        "DS0049",
+        "DS0039"
+      ],
+      "needs": [
+        "fcd:LegalEntity",
+        "fcd:EntityLifecycleEvent"
+      ],
+      "shape": "ex:IND02198Skeleton",
+      "shape_status": "skeleton",
+      "rules": [],
+      "data_rules": [],
+      "not_checked": [
+        "no entity data"
+      ]
+    },
+    {
+      "id": "IND02199",
+      "text": "Regularly documented shipments or services appear in official records without any corroborating logistics or operational evidence, indicating potential phantom transactions.",
+      "m0_mark": "no",
+      "data_sources": [
+        "DS0036",
+        "DS0004"
+      ],
+      "needs": [
+        "fcd:Shipment",
+        "fcd:LogisticsEvidence"
+      ],
+      "shape": "ex:IND02199Skeleton",
+      "shape_status": "skeleton",
+      "rules": [],
+      "data_rules": [],
+      "not_checked": [
+        "no logistics records"
+      ]
+    }
+  ]
+}

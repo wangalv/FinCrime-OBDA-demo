@@ -1,0 +1,1269 @@
+{
+  "meta": {
+    "database": "AML Triage Demo/data/features.duckdb (tx_features)",
+    "window_days": 7,
+    "rules": "legs sorted by (ts, tx_id); origin = first leg's payer; last leg returns to origin; consecutive legs connect; time order; more than one account (no minimum number of legs, as in shapes/t0039.shapes.ttl)",
+    "note": "Timestamps have minute resolution. Cases were chosen with distinct timestamps so that tie-breaking by tx_id does not matter. Expected verdicts come from src/gold_build.py verdict(), written to follow shapes/t0039.shapes.ttl; the SHACL is the rule authority, the gold follows it.",
+    "status": "ACCEPTED by the user 2026-11-08 (no domain-expert review). Frozen: log every later change here.",
+    "changes": [
+      "2026-11-08, user's decision: the typology gives no minimum number of legs, so min_3_legs and at_least_3_accounts_each_paying_once were dropped and at_least_2_accounts added. F1-roundtrip changes from negative to positive; F1-open-from-loop3 now fails only last_leg_returns_to_origin. Applied as a patch to the accepted file: selection of cases, gold SPARQL/SQL and gold rows unchanged. Do not regenerate with src/gold_build.py: a rerun picked different transaction ids for 7 cases."
+    ]
+  },
+  "cases": [
+    {
+      "id": "F1-loop3-01",
+      "family": "F1",
+      "role": "positive",
+      "what": "Three-leg loop in time order; all legs labelled laundering.",
+      "provenance": "From the data: A>B>C>A, strictly increasing time, 3 distinct accounts, within 7 days, label = 1 on every leg.",
+      "tx_ids": [
+        2131053,
+        2204314,
+        2282865
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 2131053 2204314 2282865 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (2131053, 2204314, 2282865) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 2131053,
+          "ts": "2022-09-04T04:53:00",
+          "from": "812D22980",
+          "to": "811C597B0",
+          "amount_log": 11.081770017958286
+        },
+        {
+          "tx_id": 2204314,
+          "ts": "2022-09-04T14:05:00",
+          "from": "811C597B0",
+          "to": "811B83280",
+          "amount_log": 6.586185447862999
+        },
+        {
+          "tx_id": 2282865,
+          "ts": "2022-09-04T23:49:00",
+          "from": "811B83280",
+          "to": "812D22980",
+          "amount_log": 6.495205131150742
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          2131053,
+          2204314,
+          2282865
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 2131053, 2204314, 2282865. Please check.",
+        "Could you confirm whether transactions 2131053, 2204314, 2282865 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 2131053, 2204314, 2282865. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 2131053, 2204314, 2282865 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 2131053, 2204314, 2282865. Is that supported by the data?",
+        "Do transactions 2131053, 2204314, 2282865 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 2131053, 2204314, 2282865，帮我确认一下。",
+        "请检查交易 2131053, 2204314, 2282865 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-loop3-02",
+      "family": "F1",
+      "role": "positive",
+      "what": "Three-leg loop in time order; all legs labelled laundering.",
+      "provenance": "From the data: A>B>C>A, strictly increasing time, 3 distinct accounts, within 7 days, label = 1 on every leg.",
+      "tx_ids": [
+        2131053,
+        2171211,
+        2220361
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 2131053 2171211 2220361 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (2131053, 2171211, 2220361) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 2131053,
+          "ts": "2022-09-04T04:53:00",
+          "from": "812D22980",
+          "to": "811C597B0",
+          "amount_log": 11.081770017958286
+        },
+        {
+          "tx_id": 2171211,
+          "ts": "2022-09-04T09:56:00",
+          "from": "811C597B0",
+          "to": "811C599A0",
+          "amount_log": 10.296265518136288
+        },
+        {
+          "tx_id": 2220361,
+          "ts": "2022-09-04T16:03:00",
+          "from": "811C599A0",
+          "to": "812D22980",
+          "amount_log": 18.7949385203333
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          2131053,
+          2171211,
+          2220361
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 2131053, 2171211, 2220361. Please check.",
+        "Could you confirm whether transactions 2131053, 2171211, 2220361 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 2131053, 2171211, 2220361. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 2131053, 2171211, 2220361 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 2131053, 2171211, 2220361. Is that supported by the data?",
+        "Do transactions 2131053, 2171211, 2220361 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 2131053, 2171211, 2220361，帮我确认一下。",
+        "请检查交易 2131053, 2171211, 2220361 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-loop3-03",
+      "family": "F1",
+      "role": "positive",
+      "what": "Three-leg loop in time order; all legs labelled laundering.",
+      "provenance": "From the data: A>B>C>A, strictly increasing time, 3 distinct accounts, within 7 days, label = 1 on every leg.",
+      "tx_ids": [
+        2008622,
+        2194623,
+        2211709
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 2008622 2194623 2211709 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (2008622, 2194623, 2211709) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 2008622,
+          "ts": "2022-09-03T15:36:00",
+          "from": "811C597B0",
+          "to": "811B83280",
+          "amount_log": 7.8985967421205885
+        },
+        {
+          "tx_id": 2194623,
+          "ts": "2022-09-04T12:53:00",
+          "from": "811B83280",
+          "to": "811C599A0",
+          "amount_log": 10.431197726620566
+        },
+        {
+          "tx_id": 2211709,
+          "ts": "2022-09-04T14:59:00",
+          "from": "811C599A0",
+          "to": "811C597B0",
+          "amount_log": 11.07256529457674
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          2008622,
+          2194623,
+          2211709
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 2008622, 2194623, 2211709. Please check.",
+        "Could you confirm whether transactions 2008622, 2194623, 2211709 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 2008622, 2194623, 2211709. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 2008622, 2194623, 2211709 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 2008622, 2194623, 2211709. Is that supported by the data?",
+        "Do transactions 2008622, 2194623, 2211709 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 2008622, 2194623, 2211709，帮我确认一下。",
+        "请检查交易 2008622, 2194623, 2211709 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-loop3-04",
+      "family": "F1",
+      "role": "positive",
+      "what": "Three-leg loop in time order; all legs labelled laundering.",
+      "provenance": "From the data: A>B>C>A, strictly increasing time, 3 distinct accounts, within 7 days, label = 1 on every leg.",
+      "tx_ids": [
+        1890142,
+        2025241,
+        3134586
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 1890142 2025241 3134586 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (1890142, 2025241, 3134586) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 1890142,
+          "ts": "2022-09-03T00:47:00",
+          "from": "812D22980",
+          "to": "811C597B0",
+          "amount_log": 9.550606829998486
+        },
+        {
+          "tx_id": 2025241,
+          "ts": "2022-09-03T17:39:00",
+          "from": "811C597B0",
+          "to": "811C599A0",
+          "amount_log": 9.655371005577893
+        },
+        {
+          "tx_id": 3134586,
+          "ts": "2022-09-06T18:06:00",
+          "from": "811C599A0",
+          "to": "812D22980",
+          "amount_log": 11.098938397899888
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          1890142,
+          2025241,
+          3134586
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 1890142, 2025241, 3134586. Please check.",
+        "Could you confirm whether transactions 1890142, 2025241, 3134586 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 1890142, 2025241, 3134586. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 1890142, 2025241, 3134586 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 1890142, 2025241, 3134586. Is that supported by the data?",
+        "Do transactions 1890142, 2025241, 3134586 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 1890142, 2025241, 3134586，帮我确认一下。",
+        "请检查交易 1890142, 2025241, 3134586 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-loop3-05",
+      "family": "F1",
+      "role": "positive",
+      "what": "Three-leg loop in time order; all legs labelled laundering.",
+      "provenance": "From the data: A>B>C>A, strictly increasing time, 3 distinct accounts, within 7 days, label = 1 on every leg.",
+      "tx_ids": [
+        1890142,
+        2025241,
+        2220361
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 1890142 2025241 2220361 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (1890142, 2025241, 2220361) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 1890142,
+          "ts": "2022-09-03T00:47:00",
+          "from": "812D22980",
+          "to": "811C597B0",
+          "amount_log": 9.550606829998486
+        },
+        {
+          "tx_id": 2025241,
+          "ts": "2022-09-03T17:39:00",
+          "from": "811C597B0",
+          "to": "811C599A0",
+          "amount_log": 9.655371005577893
+        },
+        {
+          "tx_id": 2220361,
+          "ts": "2022-09-04T16:03:00",
+          "from": "811C599A0",
+          "to": "812D22980",
+          "amount_log": 18.7949385203333
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          1890142,
+          2025241,
+          2220361
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 1890142, 2025241, 2220361. Please check.",
+        "Could you confirm whether transactions 1890142, 2025241, 2220361 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 1890142, 2025241, 2220361. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 1890142, 2025241, 2220361 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 1890142, 2025241, 2220361. Is that supported by the data?",
+        "Do transactions 1890142, 2025241, 2220361 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 1890142, 2025241, 2220361，帮我确认一下。",
+        "请检查交易 1890142, 2025241, 2220361 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-loop4-01",
+      "family": "F1",
+      "role": "positive",
+      "what": "Four-leg loop in time order; all legs labelled laundering.",
+      "provenance": "From the data: A>B>C>D>A, strictly increasing time, 4 distinct accounts, within 7 days, label = 1 on every leg.",
+      "tx_ids": [
+        1890142,
+        2025241,
+        2625537,
+        3120261
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 1890142 2025241 2625537 3120261 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (1890142, 2025241, 2625537, 3120261) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 1890142,
+          "ts": "2022-09-03T00:47:00",
+          "from": "812D22980",
+          "to": "811C597B0",
+          "amount_log": 9.550606829998486
+        },
+        {
+          "tx_id": 2025241,
+          "ts": "2022-09-03T17:39:00",
+          "from": "811C597B0",
+          "to": "811C599A0",
+          "amount_log": 9.655371005577893
+        },
+        {
+          "tx_id": 2625537,
+          "ts": "2022-09-05T16:42:00",
+          "from": "811C599A0",
+          "to": "811B83280",
+          "amount_log": 10.482596396045825
+        },
+        {
+          "tx_id": 3120261,
+          "ts": "2022-09-06T17:21:00",
+          "from": "811B83280",
+          "to": "812D22980",
+          "amount_log": 10.492093603871698
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          1890142,
+          2025241,
+          2625537,
+          3120261
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 1890142, 2025241, 2625537, 3120261. Please check.",
+        "Could you confirm whether transactions 1890142, 2025241, 2625537, 3120261 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 1890142, 2025241, 2625537, 3120261. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 1890142, 2025241, 2625537, 3120261 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 1890142, 2025241, 2625537, 3120261. Is that supported by the data?",
+        "Do transactions 1890142, 2025241, 2625537, 3120261 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 1890142, 2025241, 2625537, 3120261，帮我确认一下。",
+        "请检查交易 1890142, 2025241, 2625537, 3120261 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-loop4-02",
+      "family": "F1",
+      "role": "positive",
+      "what": "Four-leg loop in time order; all legs labelled laundering.",
+      "provenance": "From the data: A>B>C>D>A, strictly increasing time, 4 distinct accounts, within 7 days, label = 1 on every leg.",
+      "tx_ids": [
+        1890142,
+        2025241,
+        2625537,
+        4192595
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 1890142 2025241 2625537 4192595 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (1890142, 2025241, 2625537, 4192595) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 1890142,
+          "ts": "2022-09-03T00:47:00",
+          "from": "812D22980",
+          "to": "811C597B0",
+          "amount_log": 9.550606829998486
+        },
+        {
+          "tx_id": 2025241,
+          "ts": "2022-09-03T17:39:00",
+          "from": "811C597B0",
+          "to": "811C599A0",
+          "amount_log": 9.655371005577893
+        },
+        {
+          "tx_id": 2625537,
+          "ts": "2022-09-05T16:42:00",
+          "from": "811C599A0",
+          "to": "811B83280",
+          "amount_log": 10.482596396045825
+        },
+        {
+          "tx_id": 4192595,
+          "ts": "2022-09-08T22:52:00",
+          "from": "811B83280",
+          "to": "812D22980",
+          "amount_log": 10.539161593264508
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          1890142,
+          2025241,
+          2625537,
+          4192595
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 1890142, 2025241, 2625537, 4192595. Please check.",
+        "Could you confirm whether transactions 1890142, 2025241, 2625537, 4192595 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 1890142, 2025241, 2625537, 4192595. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 1890142, 2025241, 2625537, 4192595 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 1890142, 2025241, 2625537, 4192595. Is that supported by the data?",
+        "Do transactions 1890142, 2025241, 2625537, 4192595 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 1890142, 2025241, 2625537, 4192595，帮我确认一下。",
+        "请检查交易 1890142, 2025241, 2625537, 4192595 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-loop3-unlabelled-01",
+      "family": "F1",
+      "role": "near_positive",
+      "what": "Three-leg loop in time order whose legs carry no laundering label: the structure holds, nobody labelled it.",
+      "provenance": "From the data: same pattern as F1-loop3 but label = 0 on every leg.",
+      "tx_ids": [
+        2401249,
+        3100028,
+        4986615
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 2401249 3100028 4986615 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (2401249, 3100028, 4986615) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 2401249,
+          "ts": "2022-09-05T05:13:00",
+          "from": "8106F2770",
+          "to": "8106F1B00",
+          "amount_log": 8.643023758651921
+        },
+        {
+          "tx_id": 3100028,
+          "ts": "2022-09-06T16:19:00",
+          "from": "8106F1B00",
+          "to": "8106F2180",
+          "amount_log": 7.037291200331171
+        },
+        {
+          "tx_id": 4986615,
+          "ts": "2022-09-10T12:37:00",
+          "from": "8106F2180",
+          "to": "8106F2770",
+          "amount_log": 7.755265973861331
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          2401249,
+          3100028,
+          4986615
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 2401249, 3100028, 4986615. Please check.",
+        "Could you confirm whether transactions 2401249, 3100028, 4986615 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 2401249, 3100028, 4986615. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 2401249, 3100028, 4986615 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 2401249, 3100028, 4986615. Is that supported by the data?",
+        "Do transactions 2401249, 3100028, 4986615 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 2401249, 3100028, 4986615，帮我确认一下。",
+        "请检查交易 2401249, 3100028, 4986615 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-loop3-unlabelled-02",
+      "family": "F1",
+      "role": "near_positive",
+      "what": "Three-leg loop in time order whose legs carry no laundering label: the structure holds, nobody labelled it.",
+      "provenance": "From the data: same pattern as F1-loop3 but label = 0 on every leg.",
+      "tx_ids": [
+        1681332,
+        2576250,
+        3828943
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 1681332 2576250 3828943 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (1681332, 2576250, 3828943) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 1681332,
+          "ts": "2022-09-02T17:52:00",
+          "from": "800849CB0",
+          "to": "80084EB60",
+          "amount_log": 5.575267052420774
+        },
+        {
+          "tx_id": 2576250,
+          "ts": "2022-09-05T14:11:00",
+          "from": "80084EB60",
+          "to": "80084EB10",
+          "amount_log": 8.494775788572086
+        },
+        {
+          "tx_id": 3828943,
+          "ts": "2022-09-08T04:15:00",
+          "from": "80084EB10",
+          "to": "800849CB0",
+          "amount_log": 7.716705759035626
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          1681332,
+          2576250,
+          3828943
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 1681332, 2576250, 3828943. Please check.",
+        "Could you confirm whether transactions 1681332, 2576250, 3828943 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 1681332, 2576250, 3828943. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 1681332, 2576250, 3828943 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 1681332, 2576250, 3828943. Is that supported by the data?",
+        "Do transactions 1681332, 2576250, 3828943 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 1681332, 2576250, 3828943，帮我确认一下。",
+        "请检查交易 1681332, 2576250, 3828943 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-loop3-unlabelled-03",
+      "family": "F1",
+      "role": "near_positive",
+      "what": "Three-leg loop in time order whose legs carry no laundering label: the structure holds, nobody labelled it.",
+      "provenance": "From the data: same pattern as F1-loop3 but label = 0 on every leg.",
+      "tx_ids": [
+        4146192,
+        4633526,
+        5047836
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 4146192 4633526 5047836 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (4146192, 4633526, 5047836) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 4146192,
+          "ts": "2022-09-08T20:28:00",
+          "from": "807BE51E0",
+          "to": "807BE55D0",
+          "amount_log": 6.334185079551295
+        },
+        {
+          "tx_id": 4633526,
+          "ts": "2022-09-09T15:09:00",
+          "from": "807BE55D0",
+          "to": "807BE5BC0",
+          "amount_log": 6.743175403664339
+        },
+        {
+          "tx_id": 5047836,
+          "ts": "2022-09-10T20:20:00",
+          "from": "807BE5BC0",
+          "to": "807BE51E0",
+          "amount_log": 8.163960886219245
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          4146192,
+          4633526,
+          5047836
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 4146192, 4633526, 5047836. Please check.",
+        "Could you confirm whether transactions 4146192, 4633526, 5047836 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 4146192, 4633526, 5047836. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 4146192, 4633526, 5047836 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 4146192, 4633526, 5047836. Is that supported by the data?",
+        "Do transactions 4146192, 4633526, 5047836 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 4146192, 4633526, 5047836，帮我确认一下。",
+        "请检查交易 4146192, 4633526, 5047836 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-chain-01",
+      "family": "F1",
+      "role": "negative",
+      "what": "A chain A>B>C>D in time order that never returns to its start.",
+      "provenance": "From the data: three consecutive legs, strictly increasing time, last receiver is a new account, label = 0.",
+      "tx_ids": [
+        2778766,
+        3048901,
+        5058460
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 2778766 3048901 5058460 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (2778766, 3048901, 5058460) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 2778766,
+          "ts": "2022-09-06T00:14:00",
+          "from": "812B90E50",
+          "to": "80122B180",
+          "amount_log": 5.257339109819479
+        },
+        {
+          "tx_id": 3048901,
+          "ts": "2022-09-06T13:42:00",
+          "from": "80122B180",
+          "to": "801417F70",
+          "amount_log": 6.314724889756964
+        },
+        {
+          "tx_id": 5058460,
+          "ts": "2022-09-10T21:37:00",
+          "from": "801417F70",
+          "to": "80FC82A00",
+          "amount_log": 5.467764738858386
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": false,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": false,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [
+          "last_leg_returns_to_origin"
+        ],
+        "order": [
+          2778766,
+          3048901,
+          5058460
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 2778766, 3048901, 5058460. Please check.",
+        "Could you confirm whether transactions 2778766, 3048901, 5058460 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 2778766, 3048901, 5058460. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 2778766, 3048901, 5058460 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 2778766, 3048901, 5058460. Is that supported by the data?",
+        "Do transactions 2778766, 3048901, 5058460 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 2778766, 3048901, 5058460，帮我确认一下。",
+        "请检查交易 2778766, 3048901, 5058460 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-chain-02",
+      "family": "F1",
+      "role": "negative",
+      "what": "A chain A>B>C>D in time order that never returns to its start.",
+      "provenance": "From the data: three consecutive legs, strictly increasing time, last receiver is a new account, label = 0.",
+      "tx_ids": [
+        2778766,
+        3048901,
+        4202320
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 2778766 3048901 4202320 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (2778766, 3048901, 4202320) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 2778766,
+          "ts": "2022-09-06T00:14:00",
+          "from": "812B90E50",
+          "to": "80122B180",
+          "amount_log": 5.257339109819479
+        },
+        {
+          "tx_id": 3048901,
+          "ts": "2022-09-06T13:42:00",
+          "from": "80122B180",
+          "to": "801417F70",
+          "amount_log": 6.314724889756964
+        },
+        {
+          "tx_id": 4202320,
+          "ts": "2022-09-08T23:22:00",
+          "from": "801417F70",
+          "to": "80451FEA0",
+          "amount_log": 6.492058000307724
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": false,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": false,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [
+          "last_leg_returns_to_origin"
+        ],
+        "order": [
+          2778766,
+          3048901,
+          4202320
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 2778766, 3048901, 4202320. Please check.",
+        "Could you confirm whether transactions 2778766, 3048901, 4202320 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 2778766, 3048901, 4202320. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 2778766, 3048901, 4202320 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 2778766, 3048901, 4202320. Is that supported by the data?",
+        "Do transactions 2778766, 3048901, 4202320 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 2778766, 3048901, 4202320，帮我确认一下。",
+        "请检查交易 2778766, 3048901, 4202320 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-open-from-loop3",
+      "family": "F1",
+      "role": "negative",
+      "what": "Two legs of a labelled 3-leg loop: the loop is missing its last leg.",
+      "provenance": "First two legs (by time) of F1-loop3-01.",
+      "tx_ids": [
+        2131053,
+        2204314
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 2131053 2204314 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (2131053, 2204314) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 2131053,
+          "ts": "2022-09-04T04:53:00",
+          "from": "812D22980",
+          "to": "811C597B0",
+          "amount_log": 11.081770017958286
+        },
+        {
+          "tx_id": 2204314,
+          "ts": "2022-09-04T14:05:00",
+          "from": "811C597B0",
+          "to": "811B83280",
+          "amount_log": 6.586185447862999
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": false,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": false,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [
+          "last_leg_returns_to_origin"
+        ],
+        "order": [
+          2131053,
+          2204314
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 2131053, 2204314. Please check.",
+        "Could you confirm whether transactions 2131053, 2204314 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 2131053, 2204314. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 2131053, 2204314 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 2131053, 2204314. Is that supported by the data?",
+        "Do transactions 2131053, 2204314 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 2131053, 2204314，帮我确认一下。",
+        "请检查交易 2131053, 2204314 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-open-from-loop4",
+      "family": "F1",
+      "role": "negative",
+      "what": "Three legs of a labelled 4-leg loop: the loop is missing its last leg.",
+      "provenance": "First three legs (by time) of F1-loop4-01.",
+      "tx_ids": [
+        1890142,
+        2025241,
+        2625537
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 1890142 2025241 2625537 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (1890142, 2025241, 2625537) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 1890142,
+          "ts": "2022-09-03T00:47:00",
+          "from": "812D22980",
+          "to": "811C597B0",
+          "amount_log": 9.550606829998486
+        },
+        {
+          "tx_id": 2025241,
+          "ts": "2022-09-03T17:39:00",
+          "from": "811C597B0",
+          "to": "811C599A0",
+          "amount_log": 9.655371005577893
+        },
+        {
+          "tx_id": 2625537,
+          "ts": "2022-09-05T16:42:00",
+          "from": "811C599A0",
+          "to": "811B83280",
+          "amount_log": 10.482596396045825
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": false,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": false,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [
+          "last_leg_returns_to_origin"
+        ],
+        "order": [
+          1890142,
+          2025241,
+          2625537
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 1890142, 2025241, 2625537. Please check.",
+        "Could you confirm whether transactions 1890142, 2025241, 2625537 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 1890142, 2025241, 2625537. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 1890142, 2025241, 2625537 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 1890142, 2025241, 2625537. Is that supported by the data?",
+        "Do transactions 1890142, 2025241, 2625537 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 1890142, 2025241, 2625537，帮我确认一下。",
+        "请检查交易 1890142, 2025241, 2625537 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-out-of-order-01",
+      "family": "F1",
+      "role": "negative",
+      "what": "Legs lie on a cycle of three accounts, but their time order is not a rotation of the cycle, so the money cannot have gone round in time order.",
+      "provenance": "From the data: x>y>z>x as account edges, three distinct timestamps within 7 days, time order is neither x,y,z nor a rotation of it.",
+      "tx_ids": [
+        3286179,
+        2843688,
+        2670088
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 3286179 2843688 2670088 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (3286179, 2843688, 2670088) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 2670088,
+          "ts": "2022-09-05T19:01:00",
+          "from": "8057EA470",
+          "to": "8057E95C0",
+          "amount_log": 7.5629565335023266
+        },
+        {
+          "tx_id": 2843688,
+          "ts": "2022-09-06T03:11:00",
+          "from": "8057EA1F0",
+          "to": "8057EA470",
+          "amount_log": 8.488709351195936
+        },
+        {
+          "tx_id": 3286179,
+          "ts": "2022-09-07T01:09:00",
+          "from": "8057E95C0",
+          "to": "8057EA1F0",
+          "amount_log": 8.323589024679322
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": false,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": false,
+          "consecutive_legs_connect": false,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [
+          "last_leg_returns_to_origin",
+          "consecutive_legs_connect"
+        ],
+        "order": [
+          2670088,
+          2843688,
+          3286179
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 3286179, 2843688, 2670088. Please check.",
+        "Could you confirm whether transactions 3286179, 2843688, 2670088 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 3286179, 2843688, 2670088. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 3286179, 2843688, 2670088 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 3286179, 2843688, 2670088. Is that supported by the data?",
+        "Do transactions 3286179, 2843688, 2670088 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 3286179, 2843688, 2670088，帮我确认一下。",
+        "请检查交易 3286179, 2843688, 2670088 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-out-of-order-02",
+      "family": "F1",
+      "role": "negative",
+      "what": "Legs lie on a cycle of three accounts, but their time order is not a rotation of the cycle, so the money cannot have gone round in time order.",
+      "provenance": "From the data: x>y>z>x as account edges, three distinct timestamps within 7 days, time order is neither x,y,z nor a rotation of it.",
+      "tx_ids": [
+        5077421,
+        4601605,
+        2220075
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 5077421 4601605 2220075 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (5077421, 4601605, 2220075) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 2220075,
+          "ts": "2022-09-04T16:01:00",
+          "from": "812D0C600",
+          "to": "812D0C3C0",
+          "amount_log": 9.495064323499223
+        },
+        {
+          "tx_id": 4601605,
+          "ts": "2022-09-09T13:57:00",
+          "from": "811FFF630",
+          "to": "812D0C600",
+          "amount_log": 10.354783529781368
+        },
+        {
+          "tx_id": 5077421,
+          "ts": "2022-09-11T12:46:00",
+          "from": "812D0C3C0",
+          "to": "811FFF630",
+          "amount_log": 9.867750524300035
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": false,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": false,
+          "consecutive_legs_connect": false,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [
+          "last_leg_returns_to_origin",
+          "consecutive_legs_connect"
+        ],
+        "order": [
+          2220075,
+          4601605,
+          5077421
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 5077421, 4601605, 2220075. Please check.",
+        "Could you confirm whether transactions 5077421, 4601605, 2220075 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 5077421, 4601605, 2220075. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 5077421, 4601605, 2220075 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 5077421, 4601605, 2220075. Is that supported by the data?",
+        "Do transactions 5077421, 4601605, 2220075 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 5077421, 4601605, 2220075，帮我确认一下。",
+        "请检查交易 5077421, 4601605, 2220075 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-roundtrip",
+      "family": "F1",
+      "role": "positive",
+      "what": "Two-leg round trip A>B>A in time order; both legs labelled laundering. Counts since 2026-11-08: the typology gives no minimum number of legs.",
+      "provenance": "From the data: A>B then B>A, strictly increasing time, within 7 days, label = 1 on both.",
+      "tx_ids": [
+        679917,
+        1969709
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 679917 1969709 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (679917, 1969709) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 679917,
+          "ts": "2022-09-01T11:02:00",
+          "from": "8021353D0",
+          "to": "80266F880",
+          "amount_log": 9.750946909237516
+        },
+        {
+          "tx_id": 1969709,
+          "ts": "2022-09-03T10:45:00",
+          "from": "80266F880",
+          "to": "8021353D0",
+          "amount_log": 8.262798882310614
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          679917,
+          1969709
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 679917, 1969709. Please check.",
+        "Could you confirm whether transactions 679917, 1969709 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 679917, 1969709. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 679917, 1969709 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 679917, 1969709. Is that supported by the data?",
+        "Do transactions 679917, 1969709 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 679917, 1969709，帮我确认一下。",
+        "请检查交易 679917, 1969709 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-unrelated",
+      "family": "F1",
+      "role": "negative",
+      "what": "Three unrelated transactions, no shared account.",
+      "provenance": "From the data: three label-0 transactions whose accounts are all different.",
+      "tx_ids": [
+        1842905,
+        3685810,
+        863792
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 1842905 3685810 863792 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (1842905, 3685810, 863792) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 863792,
+          "ts": "2022-09-01T16:31:00",
+          "from": "100428858",
+          "to": "809640BD0",
+          "amount_log": 11.588071526693907
+        },
+        {
+          "tx_id": 1842905,
+          "ts": "2022-09-02T23:07:00",
+          "from": "80EAF9F20",
+          "to": "80F4EAF50",
+          "amount_log": 4.200654626915515
+        },
+        {
+          "tx_id": 3685810,
+          "ts": "2022-09-07T21:37:00",
+          "from": "80A7BF2F0",
+          "to": "80AFA5740",
+          "amount_log": 6.03572063836252
+        }
+      ],
+      "missing_ids": [],
+      "gold_verdict": {
+        "structure_matches": false,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": false,
+          "consecutive_legs_connect": false,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [
+          "last_leg_returns_to_origin",
+          "consecutive_legs_connect"
+        ],
+        "order": [
+          863792,
+          1842905,
+          3685810
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 1842905, 3685810, 863792. Please check.",
+        "Could you confirm whether transactions 1842905, 3685810, 863792 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 1842905, 3685810, 863792. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 1842905, 3685810, 863792 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 1842905, 3685810, 863792. Is that supported by the data?",
+        "Do transactions 1842905, 3685810, 863792 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 1842905, 3685810, 863792，帮我确认一下。",
+        "请检查交易 1842905, 3685810, 863792 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    },
+    {
+      "id": "F1-missing-id",
+      "family": "F1",
+      "role": "partial_ids",
+      "what": "A real 3-leg loop plus an id that does not exist. Expected: the missing id is reported, the other three are judged.",
+      "provenance": "F1-loop3-02 ids plus 99999999, which is not in tx_features.",
+      "tx_ids": [
+        2131053,
+        2171211,
+        2220361,
+        99999999
+      ],
+      "gold_sparql": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 2131053 2171211 2220361 99999999 }\n  ?tx a fcd:Transaction ; fcd:txId ?txid ; fcd:timestamp ?ts ; fcd:fromAccount ?from ; fcd:toAccount ?to ; fcd:amountLog ?amountLog .\n}",
+      "gold_sql": "SELECT tx_id, ts, from_account, to_account, amount_log FROM tx_features WHERE tx_id IN (2131053, 2171211, 2220361, 99999999) ORDER BY tx_id",
+      "gold_rows": [
+        {
+          "tx_id": 2131053,
+          "ts": "2022-09-04T04:53:00",
+          "from": "812D22980",
+          "to": "811C597B0",
+          "amount_log": 11.081770017958286
+        },
+        {
+          "tx_id": 2171211,
+          "ts": "2022-09-04T09:56:00",
+          "from": "811C597B0",
+          "to": "811C599A0",
+          "amount_log": 10.296265518136288
+        },
+        {
+          "tx_id": 2220361,
+          "ts": "2022-09-04T16:03:00",
+          "from": "811C599A0",
+          "to": "812D22980",
+          "amount_log": 18.7949385203333
+        }
+      ],
+      "missing_ids": [
+        99999999
+      ],
+      "gold_verdict": {
+        "structure_matches": true,
+        "rules": {
+          "first_leg_starts_at_origin": true,
+          "last_leg_returns_to_origin": true,
+          "consecutive_legs_connect": true,
+          "legs_in_time_order": true,
+          "at_least_2_accounts": true
+        },
+        "failed": [],
+        "order": [
+          2131053,
+          2171211,
+          2220361
+        ]
+      },
+      "questions": [
+        "I think these transactions may be Circular Transactions. The ids are 2131053, 2171211, 2220361, 99999999. Please check.",
+        "Could you confirm whether transactions 2131053, 2171211, 2220361, 99999999 form a circular pattern where the money returns to where it started?",
+        "Here are some transaction ids: 2131053, 2171211, 2220361, 99999999. Do they look like a loop of funds going around several accounts?",
+        "Check transactions 2131053, 2171211, 2220361, 99999999 for signs of circular transfers (technique T0039).",
+        "Alert suspects circular transactions on 2131053, 2171211, 2220361, 99999999. Is that supported by the data?",
+        "Do transactions 2131053, 2171211, 2220361, 99999999 send funds around a cycle of accounts and back to the first one, in time order?",
+        "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 2131053, 2171211, 2220361, 99999999，帮我确认一下。",
+        "请检查交易 2131053, 2171211, 2220361, 99999999 是否构成资金在几个账户之间转一圈又回到起点的模式。"
+      ],
+      "review": "written by Claude; accepted by the user 2026-11-08; not reviewed by a domain expert"
+    }
+  ]
+}

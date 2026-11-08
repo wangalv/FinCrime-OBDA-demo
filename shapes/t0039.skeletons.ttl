@@ -1,0 +1,39 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:   <https://example.org/rules#> .
+@prefix amx:  <https://example.org/amltrix/> .
+
+# T0039 Circular Transactions: the seven indicators this data cannot answer.
+# SKELETONS. Not loaded by src/loop_check.py, not run, not tested, not part of any experiment. Each records what a check would
+# need (ex:requires) so that code can say "cannot check, missing X". No constraint is written on purpose: a rule nobody can run
+# on any data would be unverified, and the thresholds in several indicators ("frequent", "disproportionate") are not in the typology.
+# Which data source supports which indicator is Claude's reading of the technique-level data source notes; AMLTRIX links data
+# sources to the technique, not to each indicator.
+
+ex:IND02192Skeleton a sh:NodeShape ; ex:implementsTechnique amx:T0039 ; ex:implementsIndicator amx:IND02192 ; ex:status "skeleton" ;
+    ex:requires "fcd:CompanyGroup", "fcd:SupportingDocument" ;
+    rdfs:comment "Would check: transfers between members of one group that have no supporting document or stated economic reason." .
+
+ex:IND02193Skeleton a sh:NodeShape ; ex:implementsTechnique amx:T0039 ; ex:implementsIndicator amx:IND02193 ; ex:status "skeleton" ;
+    ex:requires "fcd:Invoice", "fcd:Shipment" ;
+    rdfs:comment "Would check: the same invoice or tax reclaim document used across several transactions with no matching goods or services." .
+
+ex:IND02194Skeleton a sh:NodeShape ; ex:implementsTechnique amx:T0039 ; ex:implementsIndicator amx:IND02194 ; ex:status "skeleton" ;
+    ex:requires "fcd:LegalEntity", "fcd:BeneficialOwnerChange" ;
+    rdfs:comment "Would check: frequent formation or acquisition of entities without operations, with repeated changes of beneficial owner." .
+
+ex:IND02196Skeleton a sh:NodeShape ; ex:implementsTechnique amx:T0039 ; ex:implementsIndicator amx:IND02196 ; ex:status "skeleton" ;
+    ex:requires "fcd:DeclaredBusinessActivity", "fcd:amountRaw" ;
+    rdfs:comment "Would check: transaction volume far above the declared activity of a low-activity company. Needs the raw amount and a threshold." .
+
+ex:IND02197Skeleton a sh:NodeShape ; ex:implementsTechnique amx:T0039 ; ex:implementsIndicator amx:IND02197 ; ex:status "skeleton" ;
+    ex:requires "fcd:Shipment", "fcd:Invoice" ;
+    rdfs:comment "Would check: repeated shipments of identical goods with mismatched invoice values or inconsistent documents." .
+
+ex:IND02198Skeleton a sh:NodeShape ; ex:implementsTechnique amx:T0039 ; ex:implementsIndicator amx:IND02198 ; ex:status "skeleton" ;
+    ex:requires "fcd:LegalEntity", "fcd:EntityLifecycleEvent" ;
+    rdfs:comment "Would check: frequent establishment and dissolution of trading entities with repeated changes of account or ownership details." .
+
+ex:IND02199Skeleton a sh:NodeShape ; ex:implementsTechnique amx:T0039 ; ex:implementsIndicator amx:IND02199 ; ex:status "skeleton" ;
+    ex:requires "fcd:Shipment", "fcd:LogisticsEvidence" ;
+    rdfs:comment "Would check: shipments or services in official records with no corroborating logistics or operational evidence." .

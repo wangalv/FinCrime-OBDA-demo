@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+   xmlns:dct="http://purl.org/dc/terms/"
+   xmlns:owl="http://www.w3.org/2002/07/owl#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+   xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+>
+  <rdf:Description rdf:about="https://example.org/amlo#isIdentifiedIn">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">is identified in</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Technique"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#DataSource"/>
+    <rdfs:comment xml:lang="en">The technique can be detected in this data source.</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#usesInstrument">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">uses instrument</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Technique"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#ValueInstrument"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#instrument">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">instrument</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#InstrumentLink"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#ValueInstrument"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#TacticLink">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#Link"/>
+    <rdfs:label xml:lang="en">Tactic link</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#engagedInBy">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">engaged in by</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Technique"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Actor"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#isAssociatedWith">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">is associated with</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#RiskType"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Technique"/>
+    <owl:inverseOf rdf:resource="https://example.org/amlo#hasRiskType"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#productService">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">product or service</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#ProductServiceLink"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#ProductService"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#indicates">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">indicates</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Indicator"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Technique"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#Tactic">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#AmltrixConcept"/>
+    <rdfs:label xml:lang="en">Tactic</rdfs:label>
+    <rdfs:comment xml:lang="en">A stage of the laundering process (e.g. Layering). A technique may serve several tactics.</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#tactic">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">tactic</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#TacticLink"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Tactic"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#riskType">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">risk type</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#RiskLink"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#RiskType"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#ValueInstrument">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#AmltrixConcept"/>
+    <rdfs:label xml:lang="en">Value instrument</rdfs:label>
+    <rdfs:comment xml:lang="en">A vehicle that stores or moves value (e.g. Casino Chips).</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#ProductServiceLink">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#Link"/>
+    <rdfs:label xml:lang="en">Product/service link</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#mitigates">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">mitigates</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Mitigation"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Technique"/>
+    <owl:inverseOf rdf:resource="https://example.org/amlo#mitigatedBy"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#isUsedBy">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">is used by</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#ValueInstrument"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Technique"/>
+    <owl:inverseOf rdf:resource="https://example.org/amlo#usesInstrument"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#mitigation">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">mitigation</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#MitigationLink"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Mitigation"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#InstrumentLink">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#Link"/>
+    <rdfs:label xml:lang="en">Instrument link</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#Actor">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#AmltrixConcept"/>
+    <rdfs:label xml:lang="en">Actor</rdfs:label>
+    <rdfs:comment xml:lang="en">A persona or institution type that takes part in laundering (e.g. Cardholder, Insurance Company).</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#actor">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">actor</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#ActorLink"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Actor"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#SubTechnique">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#Technique"/>
+    <rdfs:label xml:lang="en">Sub-technique</rdfs:label>
+    <rdfs:comment xml:lang="en">A refinement of exactly one parent technique, linked with skos:broader.</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#achievesTactic">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">achieves tactic</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Technique"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Tactic"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#ProductService">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#AmltrixConcept"/>
+    <rdfs:label xml:lang="en">Product or service</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
+    <dct:title xml:lang="en">AMLO - AML middle-layer ontology (AMLTRIX structure)</dct:title>
+    <dct:description xml:lang="en">Schema for representing the AMLTRIX money-laundering framework as linked data.</dct:description>
+    <dct:source rdf:resource="https://framework.amltrix.com"/>
+    <owl:versionInfo>0.1-draft; built against AMLTRIX 1.0-beta.4</owl:versionInfo>
+    <skos:note xml:lang="en">Instance data derived from AMLTRIX must carry AMLTRIX attribution and the AMLTRIX License Terms (https://framework.amltrix.com/license).</skos:note>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#isIndicatedBy">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">is indicated by</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Technique"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Indicator"/>
+    <owl:inverseOf rdf:resource="https://example.org/amlo#indicates"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#engagesIn">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">engages in</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Actor"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Technique"/>
+    <owl:inverseOf rdf:resource="https://example.org/amlo#engagedInBy"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#Technique">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#AmltrixConcept"/>
+    <rdfs:label xml:lang="en">Technique</rdfs:label>
+    <rdfs:comment xml:lang="en">A method of laundering. Plays the role of a typology.</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#DataSource">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#AmltrixConcept"/>
+    <rdfs:label xml:lang="en">Data source</rdfs:label>
+    <rdfs:comment xml:lang="en">Where evidence of a technique can be observed.</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#RiskType">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#AmltrixConcept"/>
+    <rdfs:label xml:lang="en">Risk type</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#DataSourceLink">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#Link"/>
+    <rdfs:label xml:lang="en">Data source link</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#hasRiskType">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">has risk type</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Technique"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#RiskType"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#Link">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label xml:lang="en">Link</rdfs:label>
+    <rdfs:comment xml:lang="en">Reified relationship between a technique and another concept. dct:description holds the context-specific text of that pairing.</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#Indicator">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#AmltrixConcept"/>
+    <rdfs:label xml:lang="en">Indicator</rdfs:label>
+    <rdfs:comment xml:lang="en">An observable red flag, owned by one technique.</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#isAchievedBy">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">is achieved by</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Tactic"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Technique"/>
+    <owl:inverseOf rdf:resource="https://example.org/amlo#achievesTactic"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#shortDescription">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:label xml:lang="en">short description</rdfs:label>
+    <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2004/02/skos/core#scopeNote"/>
+    <rdfs:domain rdf:resource="https://example.org/amlo#AmltrixConcept"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#ActorLink">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#Link"/>
+    <rdfs:label xml:lang="en">Actor link</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#mitigatedBy">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">mitigated by</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Technique"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Mitigation"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#stixId">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    <rdfs:label xml:lang="en">STIX identifier</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#AmltrixConcept"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:comment xml:lang="en">Original STIX 2.1 id, kept for round-tripping to the AMLTRIX export.</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#MitigationLink">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#Link"/>
+    <rdfs:label xml:lang="en">Mitigation link</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#RiskLink">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#Link"/>
+    <rdfs:label xml:lang="en">Risk link</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#technique">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">technique</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Link"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Technique"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#AmltrixConcept">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+    <rdfs:label xml:lang="en">AMLTRIX concept</rdfs:label>
+    <rdfs:comment xml:lang="en">Abstract parent of every catalogue entry (tactic, technique, ...). Label = skos:prefLabel, ID = skos:notation, text = skos:definition.</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#dataSource">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">data source</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#DataSourceLink"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#DataSource"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#Mitigation">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="https://example.org/amlo#AmltrixConcept"/>
+    <rdfs:label xml:lang="en">Mitigation</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#exploitsProductService">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">exploits product or service</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#Technique"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#ProductService"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/amlo#isExploitedBy">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label xml:lang="en">is exploited by</rdfs:label>
+    <rdfs:domain rdf:resource="https://example.org/amlo#ProductService"/>
+    <rdfs:range rdf:resource="https://example.org/amlo#Technique"/>
+    <owl:inverseOf rdf:resource="https://example.org/amlo#exploitsProductService"/>
+  </rdf:Description>
+</rdf:RDF>
