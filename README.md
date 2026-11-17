@@ -1,6 +1,6 @@
 # AML OBDA Demo
 
-An experiment in answering an investigator's question about flagged transactions with a **small local model** (Qwen via Ollama) that only writes **SPARQL**, over terms from an ontology. A deterministic engine (**Ontop**) rewrites that SPARQL into SQL using an ontology and an R2RML mapping, runs it on the transaction database, and **SHACL plus plain code** decide the verdicts. The model never writes SQL and never decides a verdict.
+An experiment in answering an investigator's question about flagged transactions with LLM that only writes **SPARQL**, over terms from an ontology. A deterministic engine (**Ontop**) rewrites that SPARQL into SQL using an ontology and an R2RML mapping, runs it on the transaction database, and **SHACL plus plain code** decide the verdicts. The model never writes SQL and never decides a verdict.
 
 The hypothesis: this is more reliable than asking the model to write SQL directly, and it says plainly what it cannot check.
 
@@ -15,18 +15,18 @@ question ──► ids ──► intent ──► typology ──► query plan 
  (investigator) (code)  (LLM)    (Ontop)       (code)        (LLM)     (code)
                                                                           │
  summary ◄── verdicts ◄── SHACL ◄── candidate ◄── rows ◄── SQL ◄── Ontop ◄┘
-  (LLM)       (code)      (code)     (code)      (DuckDB)  (Ontop) (ontology + R2RML)
+  (LLM)       (code)      (code)     (code)        (DB)   (Ontop) (ontology + R2RML)
 ```
 
 | # | Step | Who | What happens |
 |---|---|---|---|
 | 1 | Ask | Investigator | Describes the suspicious pattern in their own words and gives the flagged transaction ids. |
 | 2 | Find the ids | Code | Pulls the transaction ids out of the question. No ids, no run. |
-| 3 | **Intent** | **LLM** | Qwen picks one technique from the AML typology's technique list (here, T0039). |
+| 3 | **Intent** | **LLM** | picks one technique from the AML typology's technique list (here, T0039). |
 | 4 | Check the intent | Code | The chosen id must be in the list and under the tactic the model named. A technique the demo cannot check is named and declined. |
 | 5 | Read the typology | Ontop | A SPARQL query over the typology data gives the technique's indicators, their text, what each one needs, and which needed terms the data lacks. |
 | 6 | Plan the queries | Code | From the requirements, the AML terms and the bridge, decides which queries to run and which terms each one fetches. Terms with no data behind them are listed as missing, not queried. |
-| 7 | **Write SPARQL** | **LLM** | Qwen writes the queries in one call. It sees only a list of AML terms and a task description, not the data, the mapping or the SQL. |
+| 7 | **Write SPARQL** | **LLM** | writes the queries in one call. It sees only a list of AML terms and a task description, not the data, the mapping or the SQL. |
 | 8 | Guard the SPARQL | Code | Checks syntax, read-only `SELECT`, unknown terms (Ontop returns zero rows for a term it does not know, instead of failing), the output variables, and that the ids match the question. |
 | 9 | **Rewrite** | **Ontop** | Loads the ontology and the R2RML mapping, expands the mapping with the ontology (a data term that sits under an AML term answers it), unfolds the SPARQL through the mapping, optimises, and produces the **SQL**. |
 | 10 | Run the SQL | Ontop, DuckDB | Read-only, on `tx_features` and `kyc_profiles`. |
@@ -37,7 +37,7 @@ question ──► ids ──► intent ──► typology ──► query plan 
 
 ### Who does what
 
-- **The model (Qwen)** does three things: reads the question to pick the technique (step 3), writes the SPARQL (step 7), and phrases the summary (step 14).
+- **The model** does three things: reads the question to pick the technique (step 3), writes the SPARQL (step 7), and phrases the summary (step 14).
 - **Ontop (OBDA)** turns SPARQL into SQL and runs it (steps 5, 9, 10). It reads the ontology and mapping when it starts, then answers each query from the expanded mapping. It does not load the data into a graph.
 - **Code and SHACL** do everything else, including all verdicts. Plain Python in `src/`; the SHACL rules are data in `validation/`.
 
@@ -45,7 +45,7 @@ question ──► ids ──► intent ──► typology ──► query plan 
 
 The Streamlit page has two chat panels that receive the same question:
 
-- **Without ontology**: Qwen is given only the table rows of the flagged transactions and decides for itself. No typology, no mapping, no SHACL, no check.
+- **Without ontology**: LLM is given only the table rows of the flagged transactions and decides for itself. No typology, no mapping, no SHACL, no check.
 - **With ontology**: the whole chain above.
 
 Both panels answer in the same five parts (how the question was read, what information was used, what the records show, what was checked, what the records cannot tell), in business language, and show their processing time. A flow diagram shows which step and which layer is running.
@@ -71,9 +71,9 @@ A term with no bridge to the data (for example `amd:Jurisdiction`: the data has 
 
 > I think these transactions may be Circular Transactions. The ids are 2131053, 2204314, 2282865. Please check.
 
-**Intent** (Qwen, checked by code): technique **T0039 Circular Transactions**, tactic Layering.
+**Intent** (LLM, checked by code): technique **T0039 Circular Transactions**, tactic Layering.
 
-**SPARQL** (Qwen, in AML terms; the transaction query):
+**SPARQL** (LLM, in AML terms; the transaction query):
 
 ```sparql
 SELECT ?txid ?to ?from ?sameBank ?ts WHERE {
@@ -114,7 +114,7 @@ The money goes 812D22980 → 811C597B0 → 811B83280 → back to 812D22980.
 | IND02195 Convoluted routing | Facts only: 3 payments, all between different banks. The typology gives no number for "multiple hops", so there is no verdict |
 | IND02192, 02193, 02194, 02196, 02197, 02198, 02199 | Cannot check: they need company groups, invoices, shipments, legal-entity records, declared activity or exact amounts, none of which the data holds |
 
-**Summary** (Qwen's wording of those facts; one run, shortened):
+**Summary** (LLM's wording of those facts; one run, shortened):
 
 > **What the records show.** The payments occurred in order: transaction 2131053 moved funds from account 812D22980 to 811C597B0, transaction 2204314 moved them from 811C597B0 to 811B83280, and transaction 2282865 returned funds from 811B83280 to 812D22980.
 >
@@ -129,7 +129,7 @@ The report never says the activity is suspicious or money laundering: the system
 Requirements, none of which are in this repository:
 
 - Python 3.9 with `pip install -r requirements.txt`.
-- **Ollama** with `qwen3.5:9b` (the demo calls it at `http://localhost:11434`).
+- Any LLMs. **Ollama** with `qwen3.5:9b` was used in this demo. 
 - **Ontop 5.5.0**, a JDK 21 and the DuckDB JDBC driver, placed under `tools/` (`tools/ontop.sh` runs them; they are git-ignored).
 - The transaction database `features.duckdb` (tables `tx_features` and `kyc_profiles`), expected at `../AML Triage Demo/data/features.duckdb`. It is built from the IBM AML sample; the KYC table is synthetic. The path is set in `config/ontop/ontop-duckdb.properties`.
 
