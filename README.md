@@ -65,6 +65,52 @@ Layers 2 to 5 are the semantic and data-access layers. Every path is defined onc
 
 A term with no bridge to the data (for example `amd:Jurisdiction`: the data has no country) is declared but unanswerable, which is how "cannot check" is derived rather than hard-coded.
 
+## Code structure
+
+```
+app/            the Streamlit page
+src/            the chain, step by step (plain Python); see below
+tests/          unit tests and Ontop-backed regression tests
+gold/           the frozen gold cases (hand-written SQL, SPARQL, expected rows and verdicts)
+ontology/       layers 1 to 4: core, application, alignment, external
+mappings/       layer 5: R2RML for the transaction and customer tables, the Ontop view
+config/ontop/   Ontop connection settings (DuckDB)
+validation/     layer 6: SHACL rules and the indicator registry
+mapping/        query_vars.ttl: which variable name each AML term gets in a query
+generated/      saved experiment runs (files that can be rebuilt are git-ignored)
+data/, vendor/  the AML typology as RDF, and its unmodified CSV export with licence
+docs/           design documents and the T0039 walkthrough
+tools/          Ontop, JDK and the DuckDB driver (git-ignored, not in the repository)
+PLAN.md         design, experiment conditions, milestones
+```
+
+`scripts/`, `shapes/`, `site/`, `jsonld/`, `rdfxml/` and `demo/` belong to the earlier work (see the end of this file); `demo/` has its own older scenarios, mappings and tests. `ontology/amlo.ttl`, `data/` and `vendor/` also come from it, but the experiment reads them as layer 1.
+
+**`src/`, in the order a question uses it**
+
+| Module | Step | What it does |
+|---|---|---|
+| `demo_run.py` | all | Runs one question through the whole chain and yields an event per step. The page and the tests both call it. |
+| `intent.py` | 3, 4 | Asks the model for a technique from the typology's list and checks the answer against that list. |
+| `typology.py`, `sources.py` | 5 | Reads the technique, its indicators and data sources through Ontop and cross-checks them against the registry. |
+| `queryplan.py` | 6 | Derives which queries to run from the requirements, the AML terms and the bridge. |
+| `prompt.py` | 7 | The prompt that makes the model write SPARQL; the prompt version is saved with every run. |
+| `sparql_guard.py` | 8 | Checks the model's SPARQL before it reaches Ontop. |
+| `data_ontology.py`, `ontop_run.py` | 9, 10 | Builds the ontology file Ontop is given, calls Ontop, and returns the rows and the SQL it wrote. |
+| `pivot.py`, `pipeline.py`, `loop_check.py` | 11, 12 | Turns the rows into a candidate chain and checks it with SHACL (pyshacl). |
+| `indicators.py` | 13 | Gives each indicator its answer: held, not held, facts only, or cannot check. |
+| `summarize.py` | 14 | Builds the facts, asks the model to phrase them in five parts, and runs the optional rule check. |
+| `baseline.py` | | The "Without ontology" side: the model sees only the table rows. |
+| `llm.py` | | A small client for a local Ollama model; no keys. |
+| `flow_view.py`, `graph_view.py` | | The flow diagram and the graph the page draws while a question runs. |
+| `paths.py` | | The one place that says where every knowledge, mapping and validation file lives. |
+
+Also in `src/`, not on the page's path:
+
+- `gold_build.py`, `gold_build_f3.py`, `gold_selftest.py`, `gold_selftest_f3.py`, `judge.py`, `queries.py`: build the gold cases, check them through Ontop, and compare a run with the gold. `pipeline.py` can run the back half of the chain with the gold SPARQL standing in for the model.
+- `try_model.py`: a small trial of the model writing queries (saved under `generated/`; not a measurement).
+- `unified.py`, `typology_ontop.py`, `build_amltrix_mapping.py`: an alternative "intent only" mode (one virtual graph over the typology and the transaction data) and the Ontop reading of the typology. The page does not offer that mode.
+
 ## Example: T0039 Circular Transactions
 
 **Question** (Investigator):
