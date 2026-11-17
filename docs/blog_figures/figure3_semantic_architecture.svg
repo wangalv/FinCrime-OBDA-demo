@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 1478" width="1160" height="1478" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#4a5561"/></marker></defs>
+<rect width="1160" height="1478" fill="#ffffff"/>
+<text x="30" y="34" font-size="21" font-weight="700" fill="#14304a">AML semantic layer: six layers, the files in each, and what reads them</text>
+<text x="30" y="56" font-size="12.5" fill="#5b6b7a">Worked example: T0039 Circular Transactions (IND02191). L1 is reused external knowledge; L2–L5 are the semantic and data-access layers; L6 validates.</text>
+<rect x="30" y="68" width="1100" height="34" rx="8" fill="#f6f8fa" stroke="#6b7280" stroke-width="1.2"/>
+<text x="44" y="89" font-size="12" font-weight="700" fill="#1b2a3a">Investigator + local LLM (Qwen 3.5 9B)</text>
+<text x="320" y="89" font-size="11.5" fill="#4a5561">picks the technique from the L1 catalogue · writes SPARQL in L2/L3 terms (ids only) · writes the summary. Never sees a table or column.</text>
+<rect x="30" y="150" width="700" height="168" rx="10" fill="#e8eef9" stroke="#2b5aa0" stroke-width="1.6"/>
+<rect x="30" y="150" width="46" height="168" rx="10" fill="#2b5aa0"/><rect x="60" y="150" width="16" height="168" fill="#2b5aa0"/>
+<text x="53" y="243.0" font-size="26" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+<text x="90" y="172" font-size="14" font-weight="700" fill="#1b2a3a">EXTERNAL KNOWLEDGE</text>
+<text x="90" y="188" font-size="10.5" fill="#4a5561">owner: the publisher · not edited</text>
+<text x="90" y="208" font-size="9.5" font-weight="700" fill="#2b5aa0" letter-spacing=".5">FILES</text>
+<text x="90" y="222" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">ontology/amlo.ttl</text>
+<text x="90" y="236" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">vendor/amltrix/*.csv</text>
+<text x="90" y="250" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">ontology/external/amltrix/typology_adapter.ttl</text>
+<text x="90" y="264" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">generated/amltrix.r2rml.ttl  (generated)</text>
+<text x="402" y="208" font-size="9.5" font-weight="700" fill="#2b5aa0" letter-spacing=".5">CONTENTS</text>
+<text x="402" y="222" font-size="10.5" fill="#1b2a3a">AMLO: 19 classes, 23 object properties</text>
+<text x="402" y="236" font-size="10.5" fill="#1b2a3a">AMLTRIX 1.0-beta.4: 8 tactics, about 300 techniques</text>
+<text x="402" y="250" font-size="10.5" fill="#1b2a3a">and sub-techniques, their indicators, data sources</text>
+<text x="402" y="264" font-size="10.5" fill="#1b2a3a">T0039: 9 indicators, 8 typology data sources</text>
+<rect x="90" y="284" width="624" height="24" rx="5" fill="#fff" stroke="#2b5aa0" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="100" y="300" font-size="10.5" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">amx:T0039  amlo:isIndicatedBy  amx:IND02191 … IND02199</text>
+<rect x="30" y="352" width="700" height="168" rx="10" fill="#e4f2ea" stroke="#2e7d5b" stroke-width="1.6"/>
+<rect x="30" y="352" width="46" height="168" rx="10" fill="#2e7d5b"/><rect x="60" y="352" width="16" height="168" fill="#2e7d5b"/>
+<text x="53" y="445.0" font-size="26" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+<text x="90" y="374" font-size="14" font-weight="700" fill="#1b2a3a">AML CORE DOMAIN ONTOLOGY</text>
+<text x="90" y="390" font-size="10.5" fill="#4a5561">owner: AML business · names no database, no typology</text>
+<text x="90" y="410" font-size="9.5" font-weight="700" fill="#2e7d5b" letter-spacing=".5">FILES</text>
+<text x="90" y="424" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">ontology/core/aml_core.ttl</text>
+<text x="402" y="410" font-size="9.5" font-weight="700" fill="#2e7d5b" letter-spacing=".5">CONTENTS</text>
+<text x="402" y="424" font-size="10.5" fill="#1b2a3a">18 AML terms (amd:)</text>
+<text x="402" y="438" font-size="10.5" fill="#1b2a3a">7 the data can answer: FundsTransfer, Account,</text>
+<text x="402" y="452" font-size="10.5" fill="#1b2a3a">transferId, transferTime, originator, beneficiary,</text>
+<text x="402" y="466" font-size="10.5" fill="#1b2a3a">sameInstitution. 11 it cannot: Jurisdiction, Invoice …</text>
+<rect x="90" y="486" width="624" height="24" rx="5" fill="#fff" stroke="#2e7d5b" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="100" y="502" font-size="10.5" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">amd:originator  rdfs:domain amd:FundsTransfer ; rdfs:range amd:Account</text>
+<rect x="30" y="554" width="700" height="168" rx="10" fill="#f7efdc" stroke="#b07a1a" stroke-width="1.6"/>
+<rect x="30" y="554" width="46" height="168" rx="10" fill="#b07a1a"/><rect x="60" y="554" width="16" height="168" fill="#b07a1a"/>
+<text x="53" y="647.0" font-size="26" font-weight="700" fill="#fff" text-anchor="middle">3</text>
+<text x="90" y="576" font-size="14" font-weight="700" fill="#1b2a3a">TYPOLOGY REQUIREMENTS</text>
+<text x="90" y="592" font-size="10.5" fill="#4a5561">owner: AML knowledge · draft, not reviewed</text>
+<text x="90" y="612" font-size="9.5" font-weight="700" fill="#b07a1a" letter-spacing=".5">FILES</text>
+<text x="90" y="626" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">ontology/application/typology_requirements.ttl</text>
+<text x="402" y="612" font-size="9.5" font-weight="700" fill="#b07a1a" letter-spacing=".5">CONTENTS</text>
+<text x="402" y="626" font-size="10.5" fill="#1b2a3a">21 needsTerm: indicator → AML terms it needs</text>
+<text x="402" y="640" font-size="10.5" fill="#1b2a3a">21 recordedIn: AML term → typology data source</text>
+<text x="402" y="654" font-size="10.5" fill="#1b2a3a">5 backgroundTerm: T0039 → account context</text>
+<text x="402" y="668" font-size="10.5" fill="#1b2a3a">(context only: no rule or verdict reads it)</text>
+<rect x="90" y="688" width="624" height="24" rx="5" fill="#fff" stroke="#b07a1a" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="100" y="704" font-size="10.5" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">amx:IND02191  align:needsTerm  amd:originator , amd:beneficiary , amd:transferTime</text>
+<rect x="30" y="756" width="700" height="168" rx="10" fill="#ece8f6" stroke="#6a4fa3" stroke-width="1.6"/>
+<rect x="30" y="756" width="46" height="168" rx="10" fill="#6a4fa3"/><rect x="60" y="756" width="16" height="168" fill="#6a4fa3"/>
+<text x="53" y="849.0" font-size="26" font-weight="700" fill="#fff" text-anchor="middle">4</text>
+<text x="90" y="778" font-size="14" font-weight="700" fill="#1b2a3a">DATA SEMANTIC &amp; ALIGNMENT</text>
+<text x="90" y="794" font-size="10.5" fill="#4a5561">owner: the data owner · changes with the database</text>
+<text x="90" y="814" font-size="9.5" font-weight="700" fill="#6a4fa3" letter-spacing=".5">FILES</text>
+<text x="90" y="828" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">ontology/alignment/source_vocabulary.ttl</text>
+<text x="90" y="842" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">ontology/alignment/aml_data_alignment.ttl</text>
+<text x="402" y="814" font-size="9.5" font-weight="700" fill="#6a4fa3" letter-spacing=".5">CONTENTS</text>
+<text x="402" y="828" font-size="10.5" fill="#1b2a3a">Source vocabulary (fcd:): 2 classes, 11 properties</text>
+<text x="402" y="842" font-size="10.5" fill="#1b2a3a">Bridge: 7 sub-class / sub-property axioms only</text>
+<text x="402" y="856" font-size="10.5" fill="#1b2a3a">No bridge line = the data cannot answer that AML</text>
+<text x="402" y="870" font-size="10.5" fill="#1b2a3a">term = “cannot check”, no query needed</text>
+<rect x="90" y="890" width="624" height="24" rx="5" fill="#fff" stroke="#6a4fa3" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="100" y="906" font-size="10.5" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">fcd:fromAccount  rdfs:subPropertyOf  amd:originator</text>
+<rect x="30" y="958" width="700" height="168" rx="10" fill="#e4eef3" stroke="#2f6f86" stroke-width="1.6"/>
+<rect x="30" y="958" width="46" height="168" rx="10" fill="#2f6f86"/><rect x="60" y="958" width="16" height="168" fill="#2f6f86"/>
+<text x="53" y="1051.0" font-size="26" font-weight="700" fill="#fff" text-anchor="middle">5</text>
+<text x="90" y="980" font-size="14" font-weight="700" fill="#1b2a3a">OBDA MAPPING</text>
+<text x="90" y="996" font-size="10.5" fill="#4a5561">owner: engineering · the only layer that names tables and columns</text>
+<text x="90" y="1016" font-size="9.5" font-weight="700" fill="#2f6f86" letter-spacing=".5">FILES</text>
+<text x="90" y="1030" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">mappings/transaction/tx_features.r2rml.ttl</text>
+<text x="90" y="1044" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">mappings/customer/customer.r2rml.ttl</text>
+<text x="90" y="1058" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">mappings/lenses/tx_features.lens.json</text>
+<text x="90" y="1072" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">config/ontop/ontop-duckdb.properties</text>
+<text x="402" y="1016" font-size="9.5" font-weight="700" fill="#2f6f86" letter-spacing=".5">CONTENTS</text>
+<text x="402" y="1030" font-size="10.5" fill="#1b2a3a">R2RML maps: tx_features and kyc_profiles tables</text>
+<text x="402" y="1044" font-size="10.5" fill="#1b2a3a">SQL lens: declares tx_id unique (no self-joins)</text>
+<text x="402" y="1058" font-size="10.5" fill="#1b2a3a">realisesSource: table → typology data source</text>
+<text x="402" y="1072" font-size="10.5" fill="#1b2a3a">(DS0019, DS0047 in part; DS0039 background)</text>
+<rect x="90" y="1092" width="624" height="24" rx="5" fill="#fff" stroke="#2f6f86" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="100" y="1108" font-size="10.5" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">fcd:fromAccount  ←  column tx.from_account</text>
+<rect x="30" y="1206" width="700" height="168" rx="10" fill="#eeeff1" stroke="#6b7280" stroke-width="1.6"/>
+<rect x="30" y="1206" width="46" height="168" rx="10" fill="#6b7280"/><rect x="60" y="1206" width="16" height="168" fill="#6b7280"/>
+<text x="53" y="1299.0" font-size="26" font-weight="700" fill="#fff" text-anchor="middle">6</text>
+<text x="90" y="1228" font-size="14" font-weight="700" fill="#1b2a3a">VALIDATION &amp; EXECUTION</text>
+<text x="90" y="1244" font-size="10.5" fill="#4a5561">owner: AML analytics + engineering · consumes layers 2–5</text>
+<text x="90" y="1264" font-size="9.5" font-weight="700" fill="#6b7280" letter-spacing=".5">FILES</text>
+<text x="90" y="1278" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">validation/shapes/t0039.shapes.ttl</text>
+<text x="90" y="1292" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">validation/indicator_registry.json</text>
+<text x="90" y="1306" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">src/indicators.py · loop_check.py · pivot.py</text>
+<text x="90" y="1320" font-size="10" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">src/sparql_guard.py · summarize.py</text>
+<text x="402" y="1264" font-size="9.5" font-weight="700" fill="#6b7280" letter-spacing=".5">CONTENTS</text>
+<text x="402" y="1278" font-size="10.5" fill="#1b2a3a">Candidate loop (code) → pyshacl, 7 rules</text>
+<text x="402" y="1292" font-size="10.5" fill="#1b2a3a">Verdict code: needs (L3) vs bridge (L4), failed rules</text>
+<text x="402" y="1306" font-size="10.5" fill="#1b2a3a">→ held · not held · facts only · cannot check</text>
+<text x="402" y="1320" font-size="10.5" fill="#1b2a3a">Guards: query terms checked, summary claims checked</text>
+<rect x="90" y="1340" width="624" height="24" rx="5" fill="#fff" stroke="#6b7280" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="100" y="1356" font-size="10.5" font-family="Menlo,Consolas,monospace" fill="#1b2a3a">[consecutive_legs_connect]  Consecutive legs must connect …</text>
+<path d="M380.0 350 L380.0 321" stroke="#4a5561" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+<text x="392.0" y="339.0" font-size="10.5" fill="#4a5561" font-style="italic">L2 depends on nothing above it: it names no typology and no database</text>
+<path d="M380.0 552 L380.0 523" stroke="#4a5561" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+<text x="392.0" y="541.0" font-size="10.5" fill="#4a5561" font-style="italic">▲ L3 refers to L1 identifiers (indicators) and to L2 terms</text>
+<path d="M380.0 754 L380.0 725" stroke="#4a5561" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+<text x="392.0" y="743.0" font-size="10.5" fill="#4a5561" font-style="italic">▲ L4 aligns source terms to L2 terms (never to L3)</text>
+<path d="M380.0 956 L380.0 927" stroke="#4a5561" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+<text x="392.0" y="945.0" font-size="10.5" fill="#4a5561" font-style="italic">▲ L5 maps tables and columns to L4 source terms</text>
+<path d="M380.0 1204 L380.0 1129" stroke="#4a5561" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+<text x="392.0" y="1170.0" font-size="10.5" fill="#4a5561" font-style="italic">▲ L6 reads L3 (needs), L4 (is there a bridge?) and the rows that Ontop returns</text>
+<path d="M22 356 L14 356 L14 1122 L22 1122" stroke="#2e7d5b" stroke-width="2" fill="none"/>
+<text transform="translate(8 739.0) rotate(-90)" font-size="10.5" font-weight="700" fill="#2e7d5b" text-anchor="middle">SEMANTIC AND DATA-ACCESS LAYERS (2–5)</text>
+<rect x="770" y="116" width="360" height="1076" rx="12" fill="#ffffff" stroke="#2b2b2b" stroke-width="1.8"/>
+<text x="950.0" y="139" font-size="14" font-weight="700" fill="#1b2a3a" text-anchor="middle">ONTOP 5.5.0 · reads L1–L5 in one run</text>
+<rect x="784" y="160" width="332" height="148" rx="8" fill="#e8eef9" stroke="#2b5aa0" stroke-width="1.4"/>
+<rect x="794" y="172" width="34" height="20" rx="4" fill="#2b5aa0"/><text x="811" y="186" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">L1</text>
+<text x="836" y="187" font-size="12.5" font-weight="700" fill="#1b2a3a">Reads the typology</text>
+<text x="796" y="222" font-size="10.8" fill="#1b2a3a">T0039 → its 9 indicators and their text</text>
+<text x="796" y="238" font-size="10.8" fill="#1b2a3a">(CSV mapping, same run)</text>
+<path d="M730 234.0 L783 234.0" stroke="#2b5aa0" stroke-width="1.8" stroke-dasharray="5 3" fill="none" marker-end="url(#ar)"/>
+<path d="M950.0 308 L950.0 328" stroke="#4a5561" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+<rect x="784" y="362" width="332" height="148" rx="8" fill="#e4f2ea" stroke="#2e7d5b" stroke-width="1.4"/>
+<rect x="794" y="374" width="34" height="20" rx="4" fill="#2e7d5b"/><text x="811" y="388" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">L2</text>
+<text x="836" y="389" font-size="12.5" font-weight="700" fill="#1b2a3a">Takes the query’s AML terms</text>
+<text x="796" y="424" font-size="10.8" fill="#1b2a3a">the query says amd:originator, amd:FundsTransfer</text>
+<text x="796" y="440" font-size="10.8" fill="#1b2a3a">never a column; the model cannot name one</text>
+<path d="M730 436.0 L783 436.0" stroke="#2e7d5b" stroke-width="1.8" stroke-dasharray="5 3" fill="none" marker-end="url(#ar)"/>
+<path d="M950.0 510 L950.0 530" stroke="#4a5561" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+<rect x="784" y="564" width="332" height="148" rx="8" fill="#f7efdc" stroke="#b07a1a" stroke-width="1.4"/>
+<rect x="794" y="576" width="34" height="20" rx="4" fill="#b07a1a"/><text x="811" y="590" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">L3</text>
+<text x="836" y="591" font-size="12.5" font-weight="700" fill="#1b2a3a">Reads the requirements</text>
+<text x="796" y="626" font-size="10.8" fill="#1b2a3a">align:needsTerm binds the variable ?term:</text>
+<text x="796" y="642" font-size="10.8" fill="#1b2a3a">“for each indicator, the terms it needs”</text>
+<path d="M730 638.0 L783 638.0" stroke="#b07a1a" stroke-width="1.8" stroke-dasharray="5 3" fill="none" marker-end="url(#ar)"/>
+<path d="M950.0 712 L950.0 732" stroke="#4a5561" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+<rect x="784" y="766" width="332" height="148" rx="8" fill="#ece8f6" stroke="#6a4fa3" stroke-width="1.4"/>
+<rect x="794" y="778" width="34" height="20" rx="4" fill="#6a4fa3"/><text x="811" y="792" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">L4</text>
+<text x="836" y="793" font-size="12.5" font-weight="700" fill="#1b2a3a">Rewrites with the bridge  (-t)</text>
+<text x="796" y="828" font-size="10.8" fill="#1b2a3a">amd:originator ⊒ fcd:fromAccount</text>
+<text x="796" y="844" font-size="10.8" fill="#1b2a3a">no bridge line → no rows, no error</text>
+<path d="M730 840.0 L783 840.0" stroke="#6a4fa3" stroke-width="1.8" stroke-dasharray="5 3" fill="none" marker-end="url(#ar)"/>
+<path d="M950.0 914 L950.0 934" stroke="#4a5561" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+<rect x="784" y="968" width="332" height="148" rx="8" fill="#e4eef3" stroke="#2f6f86" stroke-width="1.4"/>
+<rect x="794" y="980" width="34" height="20" rx="4" fill="#2f6f86"/><text x="811" y="994" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">L5</text>
+<text x="836" y="995" font-size="12.5" font-weight="700" fill="#1b2a3a">Unfolds with R2RML + lens</text>
+<text x="796" y="1030" font-size="10.8" fill="#1b2a3a">fcd:fromAccount → column from_account</text>
+<text x="796" y="1046" font-size="10.8" fill="#1b2a3a">table tx_features, one row per transfer</text>
+<path d="M730 1042.0 L783 1042.0" stroke="#2f6f86" stroke-width="1.8" stroke-dasharray="5 3" fill="none" marker-end="url(#ar)"/>
+<path d="M950.0 1116 L950.0 1135" stroke="#4a5561" stroke-width="1.3" fill="none" marker-end="url(#ar)"/>
+<rect x="784" y="1136" width="332" height="46" rx="8" fill="#f9fafb" stroke="#4a5561" stroke-width="1.4"/>
+<text x="796" y="1155" font-size="12.5" font-weight="700" fill="#1b2a3a">One SQL statement</text>
+<text x="796" y="1171" font-size="10.8" fill="#1b2a3a">about 15,000 characters, 39 UNION branches, ≈2 s</text>
+<path d="M950.0 1192 L950.0 1209" stroke="#4a5561" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+<text x="960.0" y="1203.0" font-size="10.5" fill="#4a5561" font-style="italic">SQL, read-only</text>
+<rect x="770" y="1206" width="360" height="168" rx="10" fill="#f6f8fa" stroke="#6b7280" stroke-width="1.6"/>
+<text x="950.0" y="1232" font-size="14" font-weight="700" fill="#1b2a3a" text-anchor="middle">DuckDB (read-only)</text>
+<text x="950.0" y="1260" font-size="11" fill="#1b2a3a" text-anchor="middle">features.duckdb · stays where it is,</text>
+<text x="950.0" y="1278" font-size="11" fill="#1b2a3a" text-anchor="middle">never copied into an RDF store</text>
+<text x="950.0" y="1296" font-size="11" fill="#1b2a3a" text-anchor="middle">tx_features: 5,078,345 transfers (IBM synthetic)</text>
+<text x="950.0" y="1314" font-size="11" fill="#1b2a3a" text-anchor="middle">kyc_profiles: 515,080 rows (synthetic, ours)</text>
+<text x="950.0" y="1332" font-size="11" fill="#1b2a3a" text-anchor="middle">no country, no raw amount, no invoice</text>
+<path d="M768 1290.0 L734 1290.0" stroke="#4a5561" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+<text x="750.0" y="1282.0" font-size="10.5" fill="#4a5561" font-style="italic" text-anchor="middle">rows</text>
+<rect x="30" y="1396" width="1100" height="62" rx="8" fill="#fff8e1" stroke="#b8860b" stroke-width="1"/>
+<text x="44" y="1416" font-size="12" font-weight="700" fill="#6b4e00">Held together by checks, not by convention</text>
+<text x="44" y="1434" font-size="10.8" fill="#1b2a3a">src/paths.py names every file once · src/sources.py: a needed term must be recorded in a data source of its technique, every source must exist in L1, every bridged term</text>
+<text x="44" y="1449" font-size="10.8" fill="#1b2a3a">must be provided by a table (L5) · tests/test_modules.py: each file sits in its layer’s folder · everything in L2–L5 is a draft reading, not reviewed by a domain expert.</text>
+</svg>

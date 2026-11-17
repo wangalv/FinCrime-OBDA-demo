@@ -1,0 +1,17 @@
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Ontop reads facts from an ontology file only for properties the ontology DECLARES as object or datatype properties;
+# undeclared SKOS / Dublin Core properties are treated as annotations and dropped (checked 2026-11-08: prefLabel, notation,
+# definition, broader and created all returned 0 rows without these lines). ontology/amlo.ttl is left as it is;
+# these declarations are added when the file for Ontop is built (src/typology_ontop.py).
+skos:prefLabel  a owl:DatatypeProperty .
+skos:altLabel   a owl:DatatypeProperty .
+skos:notation   a owl:DatatypeProperty .
+skos:definition a owl:DatatypeProperty .
+skos:broader    a owl:ObjectProperty .
+dct:created     a owl:DatatypeProperty .
+dct:modified    a owl:DatatypeProperty .
+dct:description a owl:DatatypeProperty .

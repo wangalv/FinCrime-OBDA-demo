@@ -1,10 +1,10 @@
-"""Candidate assembly and SHACL check for T0039 (rules of all indicators in shapes/t0039.shapes.ttl).
+"""Candidate assembly and SHACL check for T0039 (rules of all indicators in validation/shapes/t0039.shapes.ttl).
 
 Run with the project venv:  .venv/bin/python src/loop_check.py   (checks all gold cases)
 
-assemble(rows)  rows = list of dicts {tx_id, ts (ISO string), from, to, amount_log, same_bank (optional)}, e.g. what Ontop returns.
+assemble(rows)  rows = list of dicts {tx_id, ts (ISO string), from, to, same_bank (optional), amount_log (optional)}, e.g. what Ontop returns.
                 Code, not the model, sorts the legs by (ts, tx_id) and sets the origin to the first leg's payer.
-check(rows)     builds the RDF candidate, validates it with pyshacl against shapes/t0039.shapes.ttl and returns
+check(rows)     builds the RDF candidate, validates it with pyshacl against validation/shapes/t0039.shapes.ttl and returns
                 {"structure_matches": bool, "failed": [rule ids], "warnings": [rule ids], "order": [tx_ids]}.
 """
 import json
@@ -16,8 +16,11 @@ from pyshacl import validate
 from rdflib import RDF, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import SH, XSD
 
-ROOT = Path(__file__).resolve().parent.parent
-SHAPES = ROOT / "shapes" / "t0039.shapes.ttl"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import paths  # noqa: E402
+
+ROOT = paths.ROOT
+SHAPES = paths.SHAPES
 EX = Namespace("https://example.org/rules#")
 ACCOUNT = "https://example.org/account/"
 TX = "https://example.org/transaction/"
@@ -41,14 +44,15 @@ def assemble(rows):
         g.add((leg, EX["from"], URIRef(ACCOUNT + r["from"])))
         g.add((leg, EX.to, URIRef(ACCOUNT + r["to"])))
         g.add((leg, EX.at, Literal(r["ts"], datatype=XSD.dateTime)))
-        g.add((leg, EX.amountLog, Literal(float(r["amount_log"]), datatype=XSD.double)))
+        if r.get("amount_log") is not None:      # no rule reads the amount; the query asks for it only if the Alignment says an indicator needs it
+            g.add((leg, EX.amountLog, Literal(float(r["amount_log"]), datatype=XSD.double)))
         if r.get("same_bank") is not None:
             g.add((leg, EX.sameBank, Literal(bool(r["same_bank"]), datatype=XSD.boolean)))
     return g, [r["tx_id"] for r in legs]
 
 
 def check(rows, rules=None):
-    """rules: optional set of rule ids to keep (one indicator's rules, see shapes/t0039.indicators.json); default all."""
+    """rules: optional set of rule ids to keep (one indicator's rules, see validation/indicator_registry.json); default all."""
     global _shapes
     if _shapes is None:
         _shapes = Graph().parse(SHAPES)
@@ -67,7 +71,7 @@ def check(rows, rules=None):
 
 
 def main():
-    reg = json.load(open(ROOT / "shapes" / "t0039.indicators.json"))
+    reg = json.load(open(paths.REGISTRY))
     rules191 = set(next(i for i in reg["indicators"] if i["id"] == "IND02191")["rules"])
     cases = json.load(open(ROOT / "gold" / "cases.json"))["cases"]
     bad = 0

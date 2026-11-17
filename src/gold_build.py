@@ -39,7 +39,7 @@ WORDINGS = [
 
 
 def verdict(legs):
-    """Check of IND02191 written to follow shapes/t0039.shapes.ttl (the rule authority since 2026-11-08), not Ontop.
+    """Check of IND02191 written to follow validation/shapes/t0039.shapes.ttl (the rule authority since 2026-11-08), not Ontop.
     legs: list of dicts with tx_id, ts (datetime), f (payer), t (receiver). Order of input does not matter:
     legs are sorted by (ts, tx_id), the first leg's payer is the origin."""
     L = sorted(legs, key=lambda x: (x["ts"], x["tx_id"]))
@@ -169,9 +169,9 @@ def main():
         "meta": {
             "database": "AML Triage Demo/data/features.duckdb (tx_features)",
             "window_days": 7,
-            "rules": "legs sorted by (ts, tx_id); origin = first leg's payer; last leg returns to origin; consecutive legs connect; time order; more than one account (no minimum number of legs, as in shapes/t0039.shapes.ttl)",
+            "rules": "legs sorted by (ts, tx_id); origin = first leg's payer; last leg returns to origin; consecutive legs connect; time order; more than one account (no minimum number of legs, as in validation/shapes/t0039.shapes.ttl)",
             "note": "Timestamps have minute resolution. Cases were chosen with distinct timestamps so that tie-breaking by tx_id does not matter. "
-                    "Expected verdicts come from src/gold_build.py verdict(), written to follow shapes/t0039.shapes.ttl; the SHACL is the rule authority, the gold follows it.",
+                    "Expected verdicts come from src/gold_build.py verdict(), written to follow validation/shapes/t0039.shapes.ttl; the SHACL is the rule authority, the gold follows it.",
             "status": "ACCEPTED by the user 2026-11-08 (no domain-expert review). Frozen: log every later change here.",
             "changes": ["2026-11-08, user's decision: the typology gives no minimum number of legs, so min_3_legs and at_least_3_accounts_each_paying_once were dropped and at_least_2_accounts added. F1-roundtrip changes from negative to positive; F1-open-from-loop3 now fails only last_leg_returns_to_origin. Selection of cases and gold rows unchanged."],
         },

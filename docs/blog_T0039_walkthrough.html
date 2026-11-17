@@ -1,0 +1,319 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Beyond Text-to-SQL</title><style>
+@page { size: A4; margin: 18mm 16mm 20mm 16mm;
+  @bottom-left { content: "AML Semantic Layer · Blog draft"; font: 8pt Helvetica, Arial, sans-serif; color: #6b7280; }
+  @bottom-right { content: counter(page); font: 8pt Helvetica, Arial, sans-serif; color: #6b7280; } }
+* { box-sizing: border-box; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 1.5; color: #1f2933; margin: 0; }
+h1 { font-size: 26pt; line-height: 1.12; margin: 8pt 0 8pt; color: #16222e; font-weight: 700; }
+h2 { font-size: 16pt; margin: 22pt 0 6pt; color: #14304a; font-weight: 700; break-after: avoid; }
+h3 { font-size: 11.5pt; margin: 13pt 0 3pt; color: #234b69; font-weight: 700; break-after: avoid; }
+p { margin: 0 0 7pt; } ul { margin: 0 0 7pt; padding-left: 16pt; } li { margin-bottom: 3pt; }
+code { font-family: Menlo, Consolas, monospace; font-size: 8.6pt; background: #f2f4f6; padding: 0 2pt; border-radius: 2pt; }
+.sub { font-size: 12.5pt; color: #5b6b7a; margin: 0 0 10pt; }
+.meta { font-size: 8.5pt; color: #5b6b7a; border-top: 0.6pt solid #dde1e5; padding-top: 7pt; margin-bottom: 12pt; }
+.callout { font-weight: 700; color: #14304a; font-size: 11pt; background: #f4f7fa; border-left: 3pt solid #234b69; padding: 8pt 12pt; margin: 10pt 0 12pt; break-inside: avoid; }
+table { border-collapse: collapse; width: 100%; margin: 6pt 0 10pt; font-size: 8.8pt; line-height: 1.4; }
+th { background: #234b69; color: #fff; text-align: left; padding: 5pt 7pt; font-weight: 700; border: 0.5pt solid #234b69; }
+td { border: 0.5pt solid #d5dbe1; padding: 5pt 7pt; vertical-align: top; } tr { break-inside: avoid; }
+pre.code { font-family: Menlo, Consolas, monospace; font-size: 7.5pt; line-height: 1.38; background: #f6f8fa; border: 0.5pt solid #d0d7de; border-radius: 3pt; padding: 5pt 7pt; margin: 3pt 0 3pt; white-space: pre-wrap; word-break: break-word; break-inside: avoid; }
+.where { font-family: Menlo, monospace; font-size: 7.6pt; color: #57606a; margin-top: 8pt; } .where span { color: #8c959f; }
+.cap { font-size: 8.3pt; color: #5b6b7a; margin: 2pt 0 9pt; }
+.fig { margin: 8pt 0 2pt; break-inside: avoid; } .figcap { font-size: 8.4pt; color: #5b6b7a; text-align: center; font-style: italic; margin-bottom: 10pt; }
+.handoff { border-left: 2.5pt solid #234b69; background: #f3f5f8; padding: 4pt 9pt; margin: 4pt 0 9pt; font-size: 9pt; break-inside: avoid; }
+.status { border: 0.6pt solid #b8860b; background: #fff8e1; padding: 7pt 10pt; font-size: 9pt; margin: 8pt 0 10pt; break-inside: avoid; }
+.ok { color: #1a7f37; font-weight: 700; } .no { color: #a40e26; font-weight: 700; } .part { color: #9a6700; font-weight: 700; }
+.small { font-size: 8.6pt; color: #4a5561; } .disc { font-size: 8.4pt; color: #5b6b7a; margin-top: 10pt; }
+.pb { break-before: page; }
+</style></head><body>
+<h1>Beyond Text-to-SQL: Building an AML Semantic Layer for Trustworthy AI-Assisted Investigations</h1>
+<div class="sub">Combining LLM reasoning, Ontology and Ontology-Based Data Access (OBDA) to make financial crime investigations more explainable, traceable and evidence-driven.</div>
+<div class="meta"><b>Working draft</b> · Architecture / Engineering Blog · with the T0039 example at code level</div>
+<div class="callout">The central proposition: use LLMs to interpret human intent and handle ambiguity, while using an explicit semantic model, governed data access and deterministic rules to retrieve and evaluate evidence.</div>
+
+<h2>1. The problem: what does an AML investigation actually look like?</h2>
+<p>Imagine receiving an alert involving a handful of suspicious transactions. An investigator examines the transactions, identifies connected accounts and parties, reviews historical activity, looks for relationships, and tests whether the observed behaviour aligns with known financial-crime typologies or risk indicators.</p>
+<p>This is an exercise in gathering evidence, connecting relationships and testing hypotheses. It also involves human judgement: investigators work with incomplete information, navigate different data sources and decide what to investigate next. The process can be time-consuming, and outcomes may vary with experience and interpretation.</p>
+<p>An LLM could help interpret observations, identify relevant typologies, retrieve supporting evidence and explain findings. But a plausible explanation is not the same as an established fact. In an AML context, the system must make clear what is supported by evidence, what is inferred, and what cannot be established with the available data.</p>
+
+<h2>2. The role of LLMs: three modes of reasoning</h2>
+<table><tr><th>Mode</th><th>What it does</th><th>Potential AML role</th></tr>
+<tr><td><b>Deductive</b></td><td>Derives conclusions from stated premises and rules.</td><td>Evaluate whether observed transactions satisfy explicit indicator criteria.</td></tr>
+<tr><td><b>Inductive</b></td><td>Generalises patterns from examples; conclusions are probabilistic.</td><td>Learn suspicious patterns from historical cases or labelled activity.</td></tr>
+<tr><td><b>Abductive</b></td><td>Suggests plausible explanations for observations.</td><td>Interpret an investigator's narrative and suggest typologies worth exploring.</td></tr></table>
+<div class="callout">My proposition is to use LLMs for interpretation and ambiguity handling, while using semantic models, governed data access and deterministic rules for evidence retrieval and evaluation. The objective is not to remove the LLM, but to constrain the decisions that require consistency and traceability.</div>
+
+<h2>3. The solution: introducing a semantic layer</h2>
+<p>Organisations often have business glossaries, data dictionaries, regulatory definitions, rules and domain knowledge, but these resources are disconnected. A transaction database may expose fields such as <code>from_account</code>, <code>to_account</code>, <code>ts</code> and <code>amount_log</code>. An investigator thinks in terms of Originator, Beneficiary, Funds Transfer and Financial Crime Indicators. These vocabularies are related, but they are not interchangeable.</p>
+<p>A semantic layer introduces an abstraction between business meaning and physical data. Instead of asking an LLM to discover database structures and generate arbitrary SQL, the application expresses requirements using governed business concepts. The semantic and mapping layers resolve those concepts against the available data.</p>
+<p>For this experiment, the implementation combines RDF/OWL and Turtle for the semantic vocabulary, R2RML for relational-to-RDF mappings, Ontop for OBDA and virtual knowledge graph access, and SHACL plus deterministic application rules for validation and evaluation.</p>
+
+<h2 class="pb">4. Solution architecture: six semantic and execution layers</h2>
+<p>The design separates external knowledge, canonical AML concepts, typology-specific requirements, data semantics, physical mappings and execution. This is a project-specific logical architecture built around OBDA; it is not a claim that OBDA standards prescribe six layers.</p>
+<div class="fig"><svg width="100%" viewBox="0 0 760 545" xmlns="http://www.w3.org/2000/svg" role="img"><title>The six layers and what T0039 uses from each</title>
+<style>.h{font:700 11.5px Helvetica,Arial,sans-serif;fill:#1b2a3a}.s{font:10.5px Helvetica,Arial,sans-serif;fill:#4a5561}.m{font:10px Menlo,Consolas,monospace;fill:#1b2a3a}.k{font:700 10px Helvetica,Arial,sans-serif;fill:#57606a;letter-spacing:.4px}.br{font:700 10.5px Helvetica,Arial,sans-serif;fill:#2e7d5b}</style>
+<text class="k" x="46" y="14">LAYER</text><text class="k" x="418" y="14">WHAT THE T0039 EXAMPLE USES FROM IT</text>
+<rect x="46" y="24" width="340" height="62" rx="10" fill="#e8eef9" stroke="#2b5aa0" stroke-width="1.2"/>
+<text class="h" x="60" y="46">1  EXTERNAL KNOWLEDGE</text><text class="s" x="60" y="66">AMLTRIX typologies, techniques, indicators, data sources</text>
+<rect x="410" y="24" width="340" height="62" rx="10" fill="#fff" stroke="#2b5aa0" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text class="m" x="422" y="50" xml:space="preserve">T0039 Circular Transactions</text>
+<text class="m" x="422" y="66" xml:space="preserve">amlo:isIndicatedBy  IND02191 … IND02199</text>
+<path d="M386 55 L410 55" stroke="#2b5aa0" stroke-width="1.2" fill="none"/>
+<path d="M216 86 L216 110" stroke="#6b7280" stroke-width="1.2" fill="none"/><path d="M211 104 L216 110 L221 104" stroke="#6b7280" stroke-width="1.2" fill="none"/>
+<rect x="46" y="112" width="340" height="62" rx="10" fill="#e4f2ea" stroke="#2e7d5b" stroke-width="1.2"/>
+<text class="h" x="60" y="134">2  AML CORE DOMAIN ONTOLOGY</text><text class="s" x="60" y="154">Canonical AML concepts, entities, attributes, relationships</text>
+<rect x="410" y="112" width="340" height="62" rx="10" fill="#fff" stroke="#2e7d5b" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text class="m" x="422" y="138" xml:space="preserve">amd:FundsTransfer  amd:originator</text>
+<text class="m" x="422" y="154" xml:space="preserve">amd:beneficiary  amd:transferTime</text>
+<path d="M386 143 L410 143" stroke="#2e7d5b" stroke-width="1.2" fill="none"/>
+<path d="M216 174 L216 198" stroke="#6b7280" stroke-width="1.2" fill="none"/><path d="M211 192 L216 198 L221 192" stroke="#6b7280" stroke-width="1.2" fill="none"/>
+<rect x="46" y="200" width="340" height="62" rx="10" fill="#f7efdc" stroke="#b07a1a" stroke-width="1.2"/>
+<text class="h" x="60" y="222">3  TYPOLOGY REQUIREMENTS</text><text class="s" x="60" y="242">Indicator requirements, required concepts, context</text>
+<rect x="410" y="200" width="340" height="62" rx="10" fill="#fff" stroke="#b07a1a" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text class="m" x="422" y="226" xml:space="preserve">amx:IND02191 align:needsTerm</text>
+<text class="m" x="422" y="242" xml:space="preserve">  amd:originator, amd:beneficiary, …</text>
+<path d="M386 231 L410 231" stroke="#b07a1a" stroke-width="1.2" fill="none"/>
+<path d="M216 262 L216 286" stroke="#6b7280" stroke-width="1.2" fill="none"/><path d="M211 280 L216 286 L221 280" stroke="#6b7280" stroke-width="1.2" fill="none"/>
+<rect x="46" y="288" width="340" height="62" rx="10" fill="#ece8f6" stroke="#6a4fa3" stroke-width="1.2"/>
+<text class="h" x="60" y="310">4  DATA SEMANTIC & ALIGNMENT</text><text class="s" x="60" y="330">Source vocabulary, correspondence to AML concepts</text>
+<rect x="410" y="288" width="340" height="62" rx="10" fill="#fff" stroke="#6a4fa3" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text class="m" x="422" y="314" xml:space="preserve">fcd:fromAccount rdfs:subPropertyOf</text>
+<text class="m" x="422" y="330" xml:space="preserve">  amd:originator</text>
+<path d="M386 319 L410 319" stroke="#6a4fa3" stroke-width="1.2" fill="none"/>
+<path d="M216 350 L216 374" stroke="#6b7280" stroke-width="1.2" fill="none"/><path d="M211 368 L216 374 L221 368" stroke="#6b7280" stroke-width="1.2" fill="none"/>
+<rect x="46" y="376" width="340" height="62" rx="10" fill="#e4eef3" stroke="#2f6f86" stroke-width="1.2"/>
+<text class="h" x="60" y="398">5  OBDA MAPPING</text><text class="s" x="60" y="418">R2RML, Ontop mappings, SQL views, physical access</text>
+<rect x="410" y="376" width="340" height="62" rx="10" fill="#fff" stroke="#2f6f86" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text class="m" x="422" y="402" xml:space="preserve">fcd:fromAccount  &lt;-  tx.from_account</text>
+<text class="m" x="422" y="418" xml:space="preserve">table tx_features in DuckDB</text>
+<path d="M386 407 L410 407" stroke="#2f6f86" stroke-width="1.2" fill="none"/>
+<path d="M216 438 L216 462" stroke="#6b7280" stroke-width="1.2" fill="none"/><path d="M211 456 L216 462 L221 456" stroke="#6b7280" stroke-width="1.2" fill="none"/>
+<rect x="46" y="464" width="340" height="62" rx="10" fill="#eeeff1" stroke="#6b7280" stroke-width="1.2"/>
+<text class="h" x="60" y="486">6  VALIDATION & EXECUTION</text><text class="s" x="60" y="506">SHACL, indicator rules, coverage, evidence, verdict</text>
+<rect x="410" y="464" width="340" height="62" rx="10" fill="#fff" stroke="#6b7280" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text class="m" x="422" y="490" xml:space="preserve">7 SHACL rules for IND02191</text>
+<text class="m" x="422" y="506" xml:space="preserve">held / facts only / cannot check</text>
+<path d="M386 495 L410 495" stroke="#6b7280" stroke-width="1.2" fill="none"/>
+<path d="M34 112 L26 112 L26 462 L34 462" stroke="#2e7d5b" stroke-width="1.6" fill="none"/>
+<text class="br" transform="translate(16 287) rotate(-90)" text-anchor="middle">SEMANTIC AND DATA-ACCESS FOUNDATION (2–5)</text>
+</svg></div>
+<div class="figcap">Figure 1. The six layers (left) and the artefact each one contributes to the T0039 example (right, dashed). Layers 2–5 form the semantic and data-access foundation; layer 6 consumes and validates the results.</div>
+<p>The rest of this post follows one question through these layers. Each layer below shows the file it lives in and the lines that the T0039 example actually uses. All code is copied from the working demo, not rewritten for the post.</p>
+
+<h3>Layer 1 — External Knowledge</h3>
+<p>AMLTRIX provides published typologies, techniques, indicators, data sources and their relationships. The external source remains authoritative; an adapter supports integration without treating the external ontology as the local domain model.</p>
+<p>For T0039, the typology gives nine indicators. The first reads: <i>“Cyclical patterns in funds or asset transfers that ultimately revert to the same origin across multiple accounts or entities, lacking a legitimate business rationale.”</i> The demo reads these facts through Ontop, from the typology's own CSV files, with a generated R2RML mapping. The typology is never copied into our files.</p>
+
+<h3>Layer 2 — AML Core Domain Ontology</h3>
+<p>Defines canonical AML concepts and relationships independently of a particular database or typology. The model should distinguish parties from accounts: an originator is not necessarily the same thing as the account from which funds are sent.</p>
+<div class="where">ontology/core/aml_core.ttl <span>· 18 AML terms, 7 the data can answer</span></div>
+<pre class="code">amd:FundsTransfer a owl:Class ; rdfs:comment &quot;A transfer of funds from one account to another.&quot; .
+amd:originator a owl:ObjectProperty ; rdfs:domain amd:FundsTransfer ; rdfs:range amd:Account ;
+    rdfs:comment &quot;The account the funds leave (the paying account).&quot; .
+amd:Jurisdiction a owl:Class ; rdfs:comment &quot;The country or legal territory a transfer or an entity belongs to. The data has no country.&quot; .</pre><div class="cap">The vocabulary the indicators talk about. It names no database and no typology. amd:Jurisdiction is declared although the data has no country: that is deliberate (see layer 4).</div>
+<p class="small">Honest note: in this draft model, <code>amd:originator</code> points at an account. The party-versus-account distinction above is a design goal, not yet in the demo.</p>
+
+<h3>Layer 3 — Typology Requirements</h3>
+<p>Connects indicators to the AML concepts and contextual information needed for investigation. Requirements should reference the AML core vocabulary, not source-specific terms, so typology knowledge remains independent of physical data models.</p>
+<div class="where">ontology/application/typology_requirements.ttl <span>· the Alignment part</span></div>
+<pre class="code">amx:IND02191 align:needsTerm amd:FundsTransfer , amd:originator , amd:beneficiary , amd:transferTime .
+amx:IND02195 align:needsTerm amd:FundsTransfer , amd:sameInstitution , amd:Jurisdiction .
+
+amx:T0039 align:backgroundTerm fcd:customerType , fcd:industry , fcd:onboardingTenureDays , fcd:pepFlag , fcd:riskRating .</pre><div class="cap">IND02191 needs a funds transfer, who paid, who received, and when. IND02195 needs the same-bank flag and a jurisdiction. Account background is kept apart: no rule reads it.</div>
+
+<h3>Layer 4 — Data Semantic and Alignment</h3>
+<p>Describes source-side concepts and how they correspond to AML concepts. Source vocabulary and semantic alignment are separate responsibilities, even if initially maintained within one logical layer.</p>
+<div class="where">ontology/alignment/aml_data_alignment.ttl <span>· the whole bridge, 7 axioms</span></div>
+<pre class="code">fcd:Transaction rdfs:subClassOf amd:FundsTransfer .
+fcd:Account rdfs:subClassOf amd:Account .
+fcd:txId rdfs:subPropertyOf amd:transferId .
+fcd:timestamp rdfs:subPropertyOf amd:transferTime .
+fcd:fromAccount rdfs:subPropertyOf amd:originator .
+fcd:toAccount rdfs:subPropertyOf amd:beneficiary .
+fcd:sameBank rdfs:subPropertyOf amd:sameInstitution .</pre><div class="cap">Only sub-class and sub-property, so Ontop can use them for rewriting (OWL 2 QL). An AML term with no line here is one the data cannot answer.</div>
+<p>The database terms themselves (<code>fcd:fromAccount</code> and its siblings) are declared next to it in <code>source_vocabulary.ttl</code>. They change when the database changes; the AML terms above them do not.</p>
+
+<h3>Layer 5 — OBDA Mapping</h3>
+<p>R2RML and Ontop connect the semantic vocabulary to relational tables, columns and SQL. The demo uses virtual access: the source data remains in DuckDB rather than being copied into a separate RDF store.</p>
+<div class="where">mappings/transaction/tx_features.r2rml.ttl <span>· the only file that names tables and columns</span></div>
+<pre class="code">map:TransactionMap a rr:TriplesMap ;
+    align:realisesSource amx:DS0019 , amx:DS0047 ;
+    rr:logicalTable [ rr:tableName &quot;tx&quot; ] ;
+    rr:subjectMap [ rr:template &quot;https://example.org/transaction/{tx_id}&quot; ; rr:class fcd:Transaction ] ;
+    rr:predicateObjectMap
+        [ rr:predicate fcd:txId ;        rr:objectMap [ rr:column &quot;tx_id&quot; ; rr:datatype xsd:integer ] ] ,
+        [ rr:predicate fcd:timestamp ;   rr:objectMap [ rr:column &quot;ts&quot; ; rr:datatype xsd:dateTime ] ] ,
+        [ rr:predicate fcd:fromAccount ; rr:objectMap [ rr:template &quot;https://example.org/account/{from_account}&quot; ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate fcd:toAccount ;   rr:objectMap [ rr:template &quot;https://example.org/account/{to_account}&quot; ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate fcd:amountLog ;   rr:objectMap [ rr:column &quot;amount_log&quot; ; rr:datatype xsd:double ] ] ,
+        [ rr:predicate fcd:sameBank ;    rr:objectMap [ rr:column &quot;is_same_bank&quot; ; rr:datatype xsd:boolean ] ] .</pre><div class="cap">A transfer becomes an IRI built from tx_id; fcd:fromAccount reads the column from_account.</div>
+<div class="where">mappings/lenses/tx_features.lens.json <span>· a view that declares tx_id unique</span></div>
+<pre class="code">{&quot;name&quot;: [&quot;tx&quot;], &quot;baseRelation&quot;: [&quot;tx_features&quot;], &quot;type&quot;: &quot;BasicLens&quot;,
+ &quot;uniqueConstraints&quot;: {&quot;added&quot;: [{&quot;name&quot;: &quot;tx_pk&quot;, &quot;determinants&quot;: [&quot;tx_id&quot;]}]}}</pre><div class="cap">Without this, Ontop joins the table to itself once for each property.</div>
+
+<h3>Layer 6 — Validation and Execution</h3>
+<p>SHACL checks graph structure and constraints; indicator-specific code evaluates business logic; the application records outcomes and supporting evidence. Deterministic execution improves repeatability, but does not by itself prove that a rule is a correct AML interpretation.</p>
+<div class="where">validation/shapes/t0039.shapes.ttl <span>· two of the seven rules</span></div>
+<pre class="code">    # [read] &quot;cyclical pattern&quot;: each leg pays from the account the previous leg paid to
+    sh:sparql [
+        a sh:SPARQLConstraint ; sh:prefixes ex: ;
+        sh:message &quot;[consecutive_legs_connect] Consecutive legs must connect: a leg starts at the account the previous leg paid to.&quot; ;
+        sh:select &quot;&quot;&quot;
+            SELECT $this ?value WHERE {
+                $this ex:leg ?a , ?b .
+                ?a ex:seq ?s1 ; ex:to ?value .
+                ?b ex:seq ?s2 ; ex:from ?f .
+                FILTER (?s2 = ?s1 + 1 &amp;&amp; ?value != ?f)
+
+    # [added] the funds move forward in time (equal timestamps pass: the data has minute resolution; ties are ordered by tx_id before this check)
+    sh:sparql [
+        a sh:SPARQLConstraint ; sh:prefixes ex: ;
+        sh:message &quot;[legs_in_time_order] Legs must be in time order: a leg cannot happen before the one it follows.&quot; ;
+        sh:select &quot;&quot;&quot;
+            SELECT $this ?value WHERE {
+                $this ex:leg ?a , ?b .
+                ?a ex:seq ?s1 ; ex:at ?t1 .
+                ?b ex:seq ?s2 ; ex:at ?value .
+                FILTER (?s2 = ?s1 + 1 &amp;&amp; ?value &lt; ?t1)</pre><div class="cap">Each rule's message starts with [rule_id]; tags [text], [read], [added] say whether the typology says it, we read it in, or we added it.</div>
+
+<h2 class="pb">5. Walking through the demo: T0039 Circular Transactions</h2>
+<p>The worked example uses AMLTRIX technique T0039 — Circular Transactions. The investigator describes the suspected behaviour in natural language: “The alert flagged these transfers. The money seems to go round in a circle and come back to where it started.” Three transaction IDs are supplied: 2131053, 2204314 and 2282865.</p>
+<div class="fig"><svg width="100%" viewBox="0 0 760 330" xmlns="http://www.w3.org/2000/svg" role="img"><title>The path of one question</title>
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#4a5561"/></marker></defs>
+<style>.h{font:700 11.5px Helvetica,Arial,sans-serif;fill:#1b2a3a}.s{font:10.5px Helvetica,Arial,sans-serif;fill:#4a5561}.t{font:700 9.5px Helvetica,Arial,sans-serif;fill:#fff}</style>
+<rect x="10" y="14" width="170" height="74" rx="9" fill="#f6f8fa" stroke="#6b7280" stroke-width="1.2"/><text class="h" x="95.0" y="36" text-anchor="middle">Investigator</text><text class="s" x="95.0" y="54" text-anchor="middle">“goes round in a circle”</text><text class="s" x="95.0" y="70" text-anchor="middle">ids 2131053, 2204314, 2282865</text>
+<rect x="295" y="14" width="170" height="74" rx="9" fill="#f6f8fa" stroke="#6b7280" stroke-width="1.2"/><text class="h" x="380.0" y="36" text-anchor="middle">LLM (local, 9B)</text><text class="s" x="380.0" y="54" text-anchor="middle">picks technique T0039</text><text class="s" x="380.0" y="70" text-anchor="middle">writes SPARQL: ids only</text>
+<rect x="580" y="14" width="170" height="74" rx="9" fill="#fff" stroke="#2b2b2b" stroke-width="1.2"/><text class="h" x="665.0" y="36" text-anchor="middle">Ontop</text><text class="s" x="665.0" y="54" text-anchor="middle">rewrites SPARQL to SQL</text><text class="s" x="665.0" y="70" text-anchor="middle">one ontology, one mapping</text>
+<path d="M180 51 L295 51" stroke="#4a5561" stroke-width="1.4" fill="none" marker-end="url(#a)"/>
+<path d="M465 51 L580 51" stroke="#4a5561" stroke-width="1.4" fill="none" marker-end="url(#a)"/>
+<rect x="580" y="112" width="34" height="19" rx="4" fill="#2b5aa0"/><text class="t" x="597" y="125" text-anchor="middle">L1</text><text class="s" x="620" y="126">typology: T0039 → indicators</text>
+<rect x="580" y="138" width="34" height="19" rx="4" fill="#b07a1a"/><text class="t" x="597" y="151" text-anchor="middle">L3</text><text class="s" x="620" y="152">needsTerm: which terms</text>
+<rect x="580" y="164" width="34" height="19" rx="4" fill="#6a4fa3"/><text class="t" x="597" y="177" text-anchor="middle">L2+4</text><text class="s" x="620" y="178">bridge: amd → fcd</text>
+<rect x="580" y="190" width="34" height="19" rx="4" fill="#2f6f86"/><text class="t" x="597" y="203" text-anchor="middle">L5</text><text class="s" x="620" y="204">R2RML: fcd → column</text>
+<path d="M665 88 L665 108" stroke="#4a5561" stroke-width="1.4" fill="none" marker-end="url(#a)"/>
+<rect x="295" y="130" width="170" height="74" rx="9" fill="#f6f8fa" stroke="#6b7280" stroke-width="1.2"/><text class="h" x="380.0" y="152" text-anchor="middle">DuckDB (read-only)</text><text class="s" x="380.0" y="170" text-anchor="middle">≈15,000-char SQL, 39 UNIONs</text><text class="s" x="380.0" y="186" text-anchor="middle">12 rows, about 2 s</text>
+<path d="M580 168 L465 168" stroke="#4a5561" stroke-width="1.4" fill="none" marker-end="url(#a)"/>
+<rect x="10" y="130" width="170" height="74" rx="9" fill="#eeeff1" stroke="#6b7280" stroke-width="1.2"/><text class="h" x="95.0" y="152" text-anchor="middle">Code: candidate loop</text><text class="s" x="95.0" y="170" text-anchor="middle">rows → one row per transfer</text><text class="s" x="95.0" y="186" text-anchor="middle">sorted by time, origin = payer 1</text>
+<path d="M295 168 L180 168" stroke="#4a5561" stroke-width="1.4" fill="none" marker-end="url(#a)"/>
+<rect x="10" y="240" width="170" height="76" rx="9" fill="#eeeff1" stroke="#6b7280" stroke-width="1.2"/><text class="h" x="95.0" y="262" text-anchor="middle">SHACL (layer 6)</text><text class="s" x="95.0" y="280" text-anchor="middle">7 rules for IND02191</text><text class="s" x="95.0" y="296" text-anchor="middle">failed rule ids</text>
+<path d="M95 204 L95 240" stroke="#4a5561" stroke-width="1.4" fill="none" marker-end="url(#a)"/>
+<rect x="295" y="240" width="170" height="76" rx="9" fill="#eeeff1" stroke="#6b7280" stroke-width="1.2"/><text class="h" x="380.0" y="262" text-anchor="middle">Verdict code (layer 6)</text><text class="s" x="380.0" y="280" text-anchor="middle">needs (L3) vs bridge (L4)</text><text class="s" x="380.0" y="296" text-anchor="middle">held / facts / cannot check</text>
+<path d="M180 278 L295 278" stroke="#4a5561" stroke-width="1.4" fill="none" marker-end="url(#a)"/>
+<rect x="580" y="240" width="170" height="76" rx="9" fill="#f6f8fa" stroke="#6b7280" stroke-width="1.2"/><text class="h" x="665.0" y="262" text-anchor="middle">LLM: summary</text><text class="s" x="665.0" y="280" text-anchor="middle">from a fixed fact sheet</text><text class="s" x="665.0" y="296" text-anchor="middle">code checks every claim</text>
+<path d="M465 278 L580 278" stroke="#4a5561" stroke-width="1.4" fill="none" marker-end="url(#a)"/>
+</svg></div>
+<div class="figcap">Figure 2. The path of one question. The coloured tags show which layer Ontop reads at each point.</div>
+
+<h3>Step 1 — Intent identification</h3>
+<p>The LLM interprets the narrative and proposes T0039 as the relevant technique. The proposed selection is checked against the published typology catalogue by code: the id must exist and sit under the tactic the model named. Where intent is ambiguous, the application asks for clarification or presents candidate techniques.</p>
+
+<h3>Step 2 — Requirement resolution</h3>
+<p>The application retrieves the indicators associated with T0039 and resolves their declared requirements. For IND02191, the worked model uses FundsTransfer, Originator, Beneficiary and TransferTime concepts. The LLM's only other job is to write the query below, which names the technique and the ids and nothing else. Code rejects a query that names a data term itself (<code>amd:originator</code>, <code>fcd:fromAccount</code>).</p>
+<pre class="code">PREFIX amlo: &lt;https://example.org/amlo#&gt;
+PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
+PREFIX align: &lt;https://example.org/align#&gt;
+PREFIX amx: &lt;https://example.org/amltrix/&gt;
+PREFIX amd: &lt;https://example.org/aml-data#&gt;
+SELECT DISTINCT ?ind ?txid ?term ?v WHERE {
+  amx:T0039 amlo:isIndicatedBy ?i .
+  ?i skos:prefLabel ?ind ; align:needsTerm ?term .
+  VALUES ?txid { 2131053 2204314 2282865 }
+  ?tx a amd:FundsTransfer ; amd:transferId ?txid ; ?term ?v .
+}</pre><div class="cap">The evidence query. ?term is a variable that layer 3 fills in. No table or column is named anywhere in it.</div>
+<p>Read it as: <i>for every indicator of T0039, take the AML terms it needs (layer 3), and for each of the three transfers give me the value of each of those terms.</i></p>
+
+<h3>Step 3 — OBDA query rewriting</h3>
+<p>The application issues the semantic query. Ontop uses the ontology and mappings to rewrite it into SQL, which is executed against DuckDB in read-only mode. The investigator does not need to know the physical table and column names. A smaller query shows the three hops of the rewriting (layer 2 term &rarr; layer 4 bridge &rarr; layer 5 column):</p>
+<pre class="code">PREFIX amd: &lt;https://example.org/aml-data#&gt;
+SELECT ?from WHERE { ?tx a amd:FundsTransfer ; amd:transferId 2131053 ; amd:originator ?from }</pre><div class="cap">Asks for amd:originator, an AML term of layer 2.</div>
+<pre class="code">SELECT &quot;v1&quot;.&quot;from_account&quot; AS &quot;from_account1m15&quot;
+FROM &quot;tx_features&quot; &quot;v1&quot;
+WHERE (&quot;v1&quot;.&quot;from_account&quot; IS NOT NULL AND 2131053 = &quot;v1&quot;.&quot;tx_id&quot;)</pre><div class="cap">The SQL Ontop wrote and ran: amd:originator → fcd:fromAccount (bridge) → column from_account (R2RML). Result: account 812D22980.</div>
+<p>Two things I observed when running it:</p>
+<ul><li><b>Without the ontology the same query silently returns zero rows.</b> I ran it with the bridge left out: no error, no rows. Ontop treats an unknown term as “no data”, not as a mistake. This is why every term in a model-written query is checked against the known vocabulary before it reaches Ontop.</li>
+<li><b><code>amd:Jurisdiction</code> returns zero rows too</b>, with the bridge present. The system does not read “no country” from the empty result; it reads it from the missing bridge line (step 5).</li></ul>
+<p>The full evidence query is larger. Because the predicate is a variable, Ontop expands <code>?term</code> to every term of every T0039 indicator that has a bridge, joins in the typology facts, and writes one statement of about 15,000 characters with 39 <code>UNION</code> branches. It ran in 2.4 seconds on the 5-million-row table and returned <b>12 rows, one for each transfer and term</b>. I have not tried it on many transfers, so I do not know how it scales.</p>
+<table><tr><th>indicator</th><th>txid</th><th>term</th><th>value</th></tr>
+<tr><td>IND02191</td><td>2204314</td><td>amd:beneficiary</td><td>account/811B83280</td></tr>
+<tr><td>IND02191</td><td>2282865</td><td>amd:originator</td><td>account/811B83280</td></tr>
+<tr><td>IND02191</td><td>2204314</td><td>amd:transferTime</td><td>2022-09-04T14:05:00</td></tr>
+<tr><td>…</td><td colspan="3" class="small">9 more rows. The four terms are amd:originator, amd:beneficiary, amd:transferTime and amd:sameInstitution.</td></tr></table>
+
+<h3>Step 4 — Evidence evaluation</h3>
+<p>The returned transactions are ordered and assembled into a candidate flow. Plain code does this: one row for each transfer, sorted by time, the first payer taken as the origin. No interpretation happens here.</p>
+<pre class="code">@prefix ex: &lt;https://example.org/rules#&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+
+&lt;https://example.org/candidate&gt; a ex:LoopCandidate ;
+    ex:leg &lt;https://example.org/transaction/2131053&gt;,
+        &lt;https://example.org/transaction/2204314&gt;,
+        &lt;https://example.org/transaction/2282865&gt; ;
+    ex:origin &lt;https://example.org/account/812D22980&gt; .
+
+&lt;https://example.org/transaction/2131053&gt; a ex:Leg ;
+    ex:at &quot;2022-09-04T04:53:00&quot;^^xsd:dateTime ;
+    ex:from &lt;https://example.org/account/812D22980&gt; ;
+    ex:sameBank false ;
+    ex:seq 1 ;
+    ex:to &lt;https://example.org/account/811C597B0&gt; .
+
+&lt;https://example.org/transaction/2204314&gt; a ex:Leg ;
+    ex:at &quot;2022-09-04T14:05:00&quot;^^xsd:dateTime ;
+    ex:from &lt;https://example.org/account/811C597B0&gt; ;
+    ex:sameBank false ;
+    ex:seq 2 ;
+    ex:to &lt;https://example.org/account/811B83280&gt; .
+
+&lt;https://example.org/transaction/2282865&gt; a ex:Leg ;
+    ex:at &quot;2022-09-04T23:49:00&quot;^^xsd:dateTime ;
+    ex:from &lt;https://example.org/account/811B83280&gt; ;
+    ex:sameBank false ;
+    ex:seq 3 ;
+    ex:to &lt;https://example.org/account/812D22980&gt; .</pre><div class="cap">The candidate loop that SHACL receives.</div>
+<p>The rule implementation checks the defined circular structure, including connectivity, multiple accounts and time order. For the three transfers all seven rules of IND02191 pass. To see that the shape is more than a rubber stamp, I removed the middle transfer (2204314) and ran it again: <code>consecutive_legs_connect</code> fails, because the second leg no longer starts where the first one ended, and the indicator becomes <i>not held</i>. The rule definition is a project interpretation and should be reviewed by AML practitioners.</p>
+<p class="small">Known loose end: the SHACL leg shape still asks for a logarithmic amount that this mode no longer fetches. The indicator's rule list leaves that rule out, so the verdict is not affected, but the raw SHACL result contains it.</p>
+
+<h3>Step 5 — Indicator outcomes</h3>
+<p>The demo reports IND02191 as a structure match, IND02195 as facts only, and the other seven indicators as cannot check here because required information is not available in the connected dataset. The last part is decided by comparing what each indicator needs (layer 3) with the AML terms that have a bridge (layer 4). No empty query result is involved.</p>
+<table><tr><th>Indicator</th><th>Demo outcome</th><th>Interpretation</th></tr>
+<tr><td>IND02191</td><td class="ok">Structure matches</td><td>The transfers form a circular structure and return to the original account. A legitimate business rationale is not established by this structural match.</td></tr>
+<tr><td>IND02195</td><td class="part">Facts only</td><td>Three hops were observed, all between banks, but the typology does not define a numerical threshold for multiple hops, and the data has no country.</td></tr>
+<tr><td>Other seven</td><td class="no">Cannot check here</td><td>Required invoice, shipment, jurisdiction, company or other information is unavailable in the connected dataset: those <code>amd:</code> terms have no bridge.</td></tr></table>
+
+<h3>Step 6 — Explanation</h3>
+<p>The LLM generates a natural-language summary from the structured findings. The application constrains the summary to the returned facts and verdicts, with a deterministic fallback if unsupported claims are detected.</p>
+
+<h3>How the files connect</h3>
+<table><tr><th>Link</th><th>Written in</th><th>Read by</th></tr>
+<tr><td>technique → indicators → text</td><td>typology data (layer 1)</td><td>Ontop (CSV mapping), the answer</td></tr>
+<tr><td>indicator → AML terms it needs</td><td><code>typology_requirements.ttl</code> (3)</td><td>Ontop (the variable predicate), verdict code</td></tr>
+<tr><td>AML term → database term</td><td><code>aml_data_alignment.ttl</code> (4)</td><td>Ontop (rewriting), verdict code (“has a bridge?”)</td></tr>
+<tr><td>database term → table, column</td><td><code>tx_features.r2rml.ttl</code> (5)</td><td>Ontop (unfolding to SQL)</td></tr>
+<tr><td>rule → indicator</td><td><code>indicator_registry.json</code>, SHACL message ids (6)</td><td>verdict code</td></tr></table>
+<p>If the bank's table changes, only layer 5 and the right-hand side of layer 4 change. If a new indicator needs another AML term, one line in layer 3 changes. If the typology is updated, layer 1 changes. A reviewer can read the file for their layer; nobody has to read a SQL query to find out what a question meant.</p>
+
+<h2>6. Results: what has actually been verified?</h2>
+<p>The current implementation includes 26 gold test cases covering transaction loops and account background. Ontop query results match hand-written SQL across the 26 cases. SHACL results agree with the gold verdicts across the 19 loop cases. The project reports 144 automated tests, including checks on semantic-layer organisation. In the worked example, retrieval takes approximately two seconds.</p>
+<p>These are engineering checks of the implemented pipeline and its test fixtures. They do not establish that every AML interpretation or indicator rule is correct. The current model has not yet undergone formal AML domain-expert review and the demonstration covers one technique. It is not yet evidence of production readiness or of improved investigator outcomes.</p>
+<p>One more limit, specific to this mode: the model's SPARQL is close to a template (only the technique and the ids change). So the setup does not test whether a small model can write hard SPARQL; it tests whether the model can pick the technique and extract the ids, and whether the rest of the chain holds.</p>
+
+<h2>7. Challenges and lessons learned</h2>
+<h3>Semantic modelling is harder than query generation.</h3>
+<p>The difficult work is defining what concepts mean, which relationships are valid and how requirements should be reused. For example, an originator party and a source account are distinct concepts.</p>
+<h3>Data availability is not evidence sufficiency.</h3>
+<p>A field can exist without being semantically equivalent to the required concept, sufficiently complete or fit for the intended conclusion. Coverage should distinguish semantic coverage, mapping coverage, physical availability and data quality.</p>
+<h3>Not everything belongs in an ontology.</h3>
+<p>An ontology, an R2RML mapping, a SHACL shape, a business rule and runtime configuration have different responsibilities. Turtle is a serialization format, not a guarantee that all files represent the same kind of model.</p>
+<h3>Deterministic does not automatically mean correct.</h3>
+<p>A rule can execute consistently while encoding an incorrect assumption. Explicit rules are reviewable, but still require domain validation.</p>
+<h3>Governance becomes important as the model grows.</h3>
+<p>Extending the approach to more techniques and data sources will require ownership, versioning, provenance, mapping governance and impact analysis.</p>
+
+<h2>8. Final thoughts: semantic layers as a foundation for Agentic AI</h2>
+<p>Much of the discussion about Agentic AI focuses on agents, orchestration, tools and increasingly capable models. An equally important question is what organisational knowledge those agents can access, and how we ensure that they use it correctly.</p>
+<p>In this experiment, semantic knowledge defines the AML vocabulary and typology requirements; semantic data access connects those concepts to physical data; and deterministic validation evaluates evidence against explicit rules. The LLM sits above these capabilities, interpreting intent and communicating findings.</p>
+<div class="callout">The future of trustworthy enterprise AI is not just about building smarter agents. It is also about giving those agents a well-defined understanding of the business they operate in.</div>
+
+<h2>Technical references and demo</h2>
+<ul class="small"><li>AMLTRIX: https://framework.amltrix.com</li><li>Ontop: https://ontop-vkg.org/</li><li>W3C R2RML: https://www.w3.org/TR/r2rml/</li><li>W3C SHACL: https://www.w3.org/TR/shacl/</li><li>Interactive AML Ontology Demo: https://wangalv.github.io/aml-ontology/#int3</li></ul>
+<div class="disc">Disclaimer: This is an independent technical experiment using synthetic data and AMLTRIX 1.0-beta.4 (UAB Amlyze, used under the AMLTRIX License Terms). It is not endorsed by AMLTRIX and is not intended to provide an operational AML risk assessment or regulatory decision. Derivatives keep the attribution and are shared under the same terms. The transaction data is IBM's public synthetic data; the customer profiles are synthetic and generated for this demo. The code and outputs in this post come from a local run on 2026-11-10; they are not a measurement.</div>
+</body></html>

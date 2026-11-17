@@ -1,0 +1,5 @@
+# Ontop needs a mapping file; this one maps nothing useful. Used when the typology comes in as facts of the ontology file (route "merged").
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix ex: <https://example.org/unused#> .
+<#X> a rr:TriplesMap ; rr:logicalTable [ rr:sqlQuery "SELECT 1 AS id" ] ;
+  rr:subjectMap [ rr:template "https://example.org/unused/{id}" ; rr:class ex:Nothing ] .

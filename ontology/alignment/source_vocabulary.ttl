@@ -3,8 +3,14 @@
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix fcd:  <https://example.org/fincrime-data#> .
 
-# DRAFT. Terms the model may use when it writes SPARQL for the T0039 / IND02191 check.
-# Namespace is a placeholder. Derived from demo/mapping/obda/transaction_ontology.ttl, reduced to what tx_features supports here.
+# MODULE 4a of the semantic layer: the source vocabulary (fcd:), the terms of our two tables: transaction, account, from/to account, timestamp,
+# same-bank flag, customer type, risk rating, ... It records the limits of the data too (no raw amount, no country, tenure with no reference date).
+# Specific to this database: it changes when the database changes. Which AML term each of these answers is module 4b
+# (ontology/alignment/aml_data_alignment.ttl); which column holds it is module 5.
+# Split on 2026-11-10 from mapping/data_layer.ttl (merged on the same day from tx_ontology.ttl and bridge.ttl).
+# DRAFT by Claude. Not reviewed by the user or a domain expert. Namespace is a placeholder.
+# Derived from demo/mapping/obda/transaction_ontology.ttl, reduced to what tx_features supports here.
+
 
 <https://example.org/fincrime-data> a owl:Ontology ;
     rdfs:comment "Transactions and the accounts they move money between. Built from the IBM AML sample (synthetic); no raw amount, no country." .

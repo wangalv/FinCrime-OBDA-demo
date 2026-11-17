@@ -1,0 +1,162 @@
+{
+  "model": "qwen3.5:9b",
+  "prompt_version": "p1-2026-11-08",
+  "temperature": 0.3,
+  "date": "2026-11-08T16:59:28",
+  "note": "exploratory trial, not a measurement",
+  "runs": [
+    {
+      "case": "F1-loop3-01",
+      "wording": 0,
+      "question": "I think these transactions may be Circular Transactions. The ids are 2131053, 2204314, 2282865. Please check.",
+      "queries": {
+        "legs": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 2131053 2204314 2282865 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      fcd:timestamp ?ts ;\n      fcd:fromAccount ?from ;\n      fcd:toAccount ?to ;\n      fcd:amountLog ?amountLog .\n}",
+        "legs_bank": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog ?sameBank WHERE {\n  VALUES ?txid { 2131053 2204314 2282865 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      fcd:timestamp ?ts ;\n      fcd:fromAccount ?from ;\n      fcd:toAccount ?to ;\n      fcd:amountLog ?amountLog ;\n      fcd:sameBank ?sameBank .\n}",
+        "context": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT DISTINCT ?account ?customerType ?industry ?tenure ?pep ?risk\nWHERE {\n  VALUES ?txid { 2131053 2204314 2282865 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      (fcd:fromAccount ?account .)\n    UNION\n    (fcd:toAccount ?account .)\n  ?account fcd:customerType ?customerType .\n  OPTIONAL { ?account fcd:industry ?industry }\n  ?account fcd:onboardingTenureDays ?tenure .\n  ?account fcd:pepFlag ?pep .\n  ?account fcd:riskRating ?risk .\n}"
+      },
+      "raw": {
+        "legs": "{\n  \"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\\n  VALUES ?txid { 2131053 2204314 2282865 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      fcd:timestamp ?ts ;\\n      fcd:fromAccount ?from ;\\n      fcd:toAccount ?to ;\\n      fcd:amountLog ?amountLog .\\n}\"\n}",
+        "legs_bank": "{\"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?txid ?ts ?from ?to ?amountLog ?sameBank WHERE {\\n  VALUES ?txid { 2131053 2204314 2282865 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      fcd:timestamp ?ts ;\\n      fcd:fromAccount ?from ;\\n      fcd:toAccount ?to ;\\n      fcd:amountLog ?amountLog ;\\n      fcd:sameBank ?sameBank .\\n}\"}",
+        "context": "{\n  \"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT DISTINCT ?account ?customerType ?industry ?tenure ?pep ?risk\\nWHERE {\\n  VALUES ?txid { 2131053 2204314 2282865 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      (fcd:fromAccount ?account .)\\n    UNION\\n    (fcd:toAccount ?account .)\\n  ?account fcd:customerType ?customerType .\\n  OPTIONAL { ?account fcd:industry ?industry }\\n  ?account fcd:onboardingTenureDays ?tenure .\\n  ?account fcd:pepFlag ?pep .\\n  ?account fcd:riskRating ?risk .\\n}\"\n}"
+      },
+      "guard": {
+        "legs": [],
+        "legs_bank": [],
+        "context": [
+          [
+            "syntax",
+            "the query does not parse: Expected SelectQuery, found '('  (at char 223), (line:7, col:7)"
+          ]
+        ]
+      },
+      "seconds": {
+        "legs": 5.7,
+        "legs_bank": 6.8,
+        "context": 8.7
+      },
+      "outcome": "rejected_by_guard: context:syntax"
+    },
+    {
+      "case": "F1-chain-01",
+      "wording": 1,
+      "question": "Could you confirm whether transactions 2778766, 3048901, 5058460 form a circular pattern where the money returns to where it started?",
+      "queries": {
+        "legs": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 2778766 3048901 5058460 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      fcd:timestamp ?ts ;\n      fcd:fromAccount ?from ;\n      fcd:toAccount ?to ;\n      fcd:amountLog ?amountLog .\n}",
+        "legs_bank": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog ?sameBank WHERE {\n  VALUES ?txid { 2778766 3048901 5058460 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      fcd:timestamp ?ts ;\n      fcd:fromAccount ?from ;\n      fcd:toAccount ?to ;\n      fcd:amountLog ?amountLog ;\n      fcd:sameBank ?sameBank .\n}",
+        "context": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?account ?customerType ?industry ?tenure ?pep ?risk\nWHERE {\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      fcd:fromAccount ?fromAcc ;\n      fcd:toAccount ?toAcc .\n  \n  VALUES ?txid { 2778766 3048901 5058460 } .\n  \n  BIND(?fromAcc AS ?account) .\n  \n  ?account fcd:customerType ?customerType ;\n           fcd:onboardingTenureDays ?tenure ;\n           fcd:pepFlag ?pep ;\n           fcd:riskRating ?risk .\n  OPTIONAL { ?account fcd:industry ?industry } .\n}"
+      },
+      "raw": {
+        "legs": "{\n  \"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\\n  VALUES ?txid { 2778766 3048901 5058460 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      fcd:timestamp ?ts ;\\n      fcd:fromAccount ?from ;\\n      fcd:toAccount ?to ;\\n      fcd:amountLog ?amountLog .\\n}\"\n}",
+        "legs_bank": "{\"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?txid ?ts ?from ?to ?amountLog ?sameBank WHERE {\\n  VALUES ?txid { 2778766 3048901 5058460 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      fcd:timestamp ?ts ;\\n      fcd:fromAccount ?from ;\\n      fcd:toAccount ?to ;\\n      fcd:amountLog ?amountLog ;\\n      fcd:sameBank ?sameBank .\\n}\"}",
+        "context": "{\n  \"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?account ?customerType ?industry ?tenure ?pep ?risk\\nWHERE {\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      fcd:fromAccount ?fromAcc ;\\n      fcd:toAccount ?toAcc .\\n  \\n  VALUES ?txid { 2778766 3048901 5058460 } .\\n  \\n  BIND(?fromAcc AS ?account) .\\n  \\n  ?account fcd:customerType ?customerType ;\\n           fcd:onboardingTenureDays ?tenure ;\\n           fcd:pepFlag ?pep ;\\n           fcd:riskRating ?risk .\\n  OPTIONAL { ?account fcd:industry ?industry } .\\n}\"\n}"
+      },
+      "guard": {
+        "legs": [],
+        "legs_bank": [],
+        "context": []
+      },
+      "seconds": {
+        "legs": 6.2,
+        "legs_bank": 6.7,
+        "context": 9.2
+      },
+      "differences": [
+        "account background differs from the F3 gold"
+      ],
+      "outcome": "silently_wrong"
+    },
+    {
+      "case": "F1-roundtrip",
+      "wording": 2,
+      "question": "Here are some transaction ids: 679917, 1969709. Do they look like a loop of funds going around several accounts?",
+      "queries": {
+        "legs": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 679917 1969709 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      fcd:timestamp ?ts ;\n      fcd:fromAccount ?from ;\n      fcd:toAccount ?to ;\n      fcd:amountLog ?amountLog .\n}",
+        "legs_bank": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog ?sameBank WHERE {\n  VALUES ?txid { 679917 1969709 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      fcd:timestamp ?ts ;\n      fcd:fromAccount ?from ;\n      fcd:toAccount ?to ;\n      fcd:amountLog ?amountLog ;\n      fcd:sameBank ?sameBank .\n}",
+        "context": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?account ?customerType ?industry ?tenure ?pep ?risk\nWHERE {\n  VALUES ?txid { 679917 1969709 }\n  ?tx a fcd:Transaction ;\n       fcd:txId ?txid ;\n       (fcd:fromAccount ?account .)\n       UNION\n       (fcd:toAccount ?account .)\n  ?account fcd:customerType ?customerType ;\n            fcd:industry ?industry ;\n            fcd:onboardingTenureDays ?tenure ;\n            fcd:pepFlag ?pep ;\n            fcd:riskRating ?risk .\n}"
+      },
+      "raw": {
+        "legs": "{\"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\\n  VALUES ?txid { 679917 1969709 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      fcd:timestamp ?ts ;\\n      fcd:fromAccount ?from ;\\n      fcd:toAccount ?to ;\\n      fcd:amountLog ?amountLog .\\n}\"}",
+        "legs_bank": "{\"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?txid ?ts ?from ?to ?amountLog ?sameBank WHERE {\\n  VALUES ?txid { 679917 1969709 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      fcd:timestamp ?ts ;\\n      fcd:fromAccount ?from ;\\n      fcd:toAccount ?to ;\\n      fcd:amountLog ?amountLog ;\\n      fcd:sameBank ?sameBank .\\n}\"}",
+        "context": "{\"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?account ?customerType ?industry ?tenure ?pep ?risk\\nWHERE {\\n  VALUES ?txid { 679917 1969709 }\\n  ?tx a fcd:Transaction ;\\n       fcd:txId ?txid ;\\n       (fcd:fromAccount ?account .)\\n       UNION\\n       (fcd:toAccount ?account .)\\n  ?account fcd:customerType ?customerType ;\\n            fcd:industry ?industry ;\\n            fcd:onboardingTenureDays ?tenure ;\\n            fcd:pepFlag ?pep ;\\n            fcd:riskRating ?risk .\\n}\"}"
+      },
+      "guard": {
+        "legs": [],
+        "legs_bank": [],
+        "context": [
+          [
+            "syntax",
+            "the query does not parse: Expected SelectQuery, found '('  (at char 207), (line:7, col:8)"
+          ]
+        ]
+      },
+      "seconds": {
+        "legs": 5.8,
+        "legs_bank": 6.3,
+        "context": 7.7
+      },
+      "outcome": "rejected_by_guard: context:syntax"
+    },
+    {
+      "case": "F1-missing-id",
+      "wording": 3,
+      "question": "Check transactions 2131053, 2171211, 2220361, 99999999 for signs of circular transfers (technique T0039).",
+      "queries": {
+        "legs": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 2131053 2171211 2220361 99999999 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      fcd:timestamp ?ts ;\n      fcd:fromAccount ?from ;\n      fcd:toAccount ?to ;\n      fcd:amountLog ?amountLog .\n}",
+        "legs_bank": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog ?sameBank WHERE {\n  VALUES ?txid { 2131053 2171211 2220361 99999999 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      fcd:timestamp ?ts ;\n      fcd:fromAccount ?from ;\n      fcd:toAccount ?to ;\n      fcd:amountLog ?amountLog ;\n      fcd:sameBank ?sameBank .\n}",
+        "context": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?account ?customerType ?industry ?tenure ?pep ?risk\nWHERE {\n  VALUES ?txid { 2131053 2171211 2220361 99999999 }\n  ?tx a fcd:Transaction ;\n       fcd:txId ?txid ;\n       (fcd:fromAccount ?account .)\n       UNION\n       (fcd:toAccount ?account .)\n  ?account fcd:customerType ?customerType ;\n            fcd:onboardingTenureDays ?tenure ;\n            fcd:pepFlag ?pep ;\n            fcd:riskRating ?risk .\n  OPTIONAL { ?account fcd:industry ?industry }\n}"
+      },
+      "raw": {
+        "legs": "{\"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\\n  VALUES ?txid { 2131053 2171211 2220361 99999999 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      fcd:timestamp ?ts ;\\n      fcd:fromAccount ?from ;\\n      fcd:toAccount ?to ;\\n      fcd:amountLog ?amountLog .\\n}\"}",
+        "legs_bank": "{\"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?txid ?ts ?from ?to ?amountLog ?sameBank WHERE {\\n  VALUES ?txid { 2131053 2171211 2220361 99999999 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      fcd:timestamp ?ts ;\\n      fcd:fromAccount ?from ;\\n      fcd:toAccount ?to ;\\n      fcd:amountLog ?amountLog ;\\n      fcd:sameBank ?sameBank .\\n}\"}",
+        "context": "{\n\"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?account ?customerType ?industry ?tenure ?pep ?risk\\nWHERE {\\n  VALUES ?txid { 2131053 2171211 2220361 99999999 }\\n  ?tx a fcd:Transaction ;\\n       fcd:txId ?txid ;\\n       (fcd:fromAccount ?account .)\\n       UNION\\n       (fcd:toAccount ?account .)\\n  ?account fcd:customerType ?customerType ;\\n            fcd:onboardingTenureDays ?tenure ;\\n            fcd:pepFlag ?pep ;\\n            fcd:riskRating ?risk .\\n  OPTIONAL { ?account fcd:industry ?industry }\\n}\"\n}"
+      },
+      "guard": {
+        "legs": [],
+        "legs_bank": [],
+        "context": [
+          [
+            "syntax",
+            "the query does not parse: Expected SelectQuery, found '('  (at char 225), (line:7, col:8)"
+          ]
+        ]
+      },
+      "seconds": {
+        "legs": 6.4,
+        "legs_bank": 7.0,
+        "context": 8.7
+      },
+      "outcome": "rejected_by_guard: context:syntax"
+    },
+    {
+      "case": "F1-loop4-01",
+      "wording": 6,
+      "question": "我觉得这几笔交易有循环转账（Circular Transactions）的嫌疑，交易编号是 1890142, 2025241, 2625537, 3120261，帮我确认一下。",
+      "queries": {
+        "legs": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\n  VALUES ?txid { 1890142 2025241 2625537 3120261 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      fcd:timestamp ?ts ;\n      fcd:fromAccount ?from ;\n      fcd:toAccount ?to ;\n      fcd:amountLog ?amountLog .\n}",
+        "legs_bank": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT ?txid ?ts ?from ?to ?amountLog ?sameBank WHERE {\n  VALUES ?txid { 1890142 2025241 2625537 3120261 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      fcd:timestamp ?ts ;\n      fcd:fromAccount ?from ;\n      fcd:toAccount ?to ;\n      fcd:amountLog ?amountLog ;\n      fcd:sameBank ?sameBank .\n}",
+        "context": "PREFIX fcd: <https://example.org/fincrime-data#>\nSELECT DISTINCT ?account ?customerType ?industry ?tenure ?pep ?risk\nWHERE {\n  VALUES ?txid { 1890142 2025241 2625537 3120261 }\n  ?tx a fcd:Transaction ;\n      fcd:txId ?txid ;\n      (fcd:fromAccount ?account .)\n      OPTIONAL { fcd:toAccount ?account } .\n  ?account fcd:customerType ?customerType .\n  OPTIONAL { ?account fcd:industry ?industry } .\n  ?account fcd:onboardingTenureDays ?tenure .\n  ?account fcd:pepFlag ?pep .\n  ?account fcd:riskRating ?risk .\n}"
+      },
+      "raw": {
+        "legs": "{\"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?txid ?ts ?from ?to ?amountLog WHERE {\\n  VALUES ?txid { 1890142 2025241 2625537 3120261 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      fcd:timestamp ?ts ;\\n      fcd:fromAccount ?from ;\\n      fcd:toAccount ?to ;\\n      fcd:amountLog ?amountLog .\\n}\"}",
+        "legs_bank": "{\"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT ?txid ?ts ?from ?to ?amountLog ?sameBank WHERE {\\n  VALUES ?txid { 1890142 2025241 2625537 3120261 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      fcd:timestamp ?ts ;\\n      fcd:fromAccount ?from ;\\n      fcd:toAccount ?to ;\\n      fcd:amountLog ?amountLog ;\\n      fcd:sameBank ?sameBank .\\n}\"}",
+        "context": "{\"sparql\": \"PREFIX fcd: <https://example.org/fincrime-data#>\\nSELECT DISTINCT ?account ?customerType ?industry ?tenure ?pep ?risk\\nWHERE {\\n  VALUES ?txid { 1890142 2025241 2625537 3120261 }\\n  ?tx a fcd:Transaction ;\\n      fcd:txId ?txid ;\\n      (fcd:fromAccount ?account .)\\n      OPTIONAL { fcd:toAccount ?account } .\\n  ?account fcd:customerType ?customerType .\\n  OPTIONAL { ?account fcd:industry ?industry } .\\n  ?account fcd:onboardingTenureDays ?tenure .\\n  ?account fcd:pepFlag ?pep .\\n  ?account fcd:riskRating ?risk .\\n}\"}"
+      },
+      "guard": {
+        "legs": [],
+        "legs_bank": [],
+        "context": [
+          [
+            "syntax",
+            "the query does not parse: Expected SelectQuery, found '('  (at char 231), (line:7, col:7)"
+          ]
+        ]
+      },
+      "seconds": {
+        "legs": 6.4,
+        "legs_bank": 7.0,
+        "context": 8.8
+      },
+      "outcome": "rejected_by_guard: context:syntax"
+    }
+  ]
+}

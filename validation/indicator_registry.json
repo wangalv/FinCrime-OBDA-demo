@@ -9,44 +9,8 @@
     "name": "Layering"
   },
   "source": "Derived from AMLTRIX 1.0-beta.4 by UAB Amlyze (https://framework.amltrix.com), used under the AMLTRIX License Terms. Not endorsed by AMLTRIX. Derivative works must keep this attribution and be distributed under the same terms.",
-  "status": "DRAFT by Claude, 2026-11-08. Not reviewed by the user or a domain expert. 'needs', 'data_sources' per indicator and 'rules' are Claude's reading; AMLTRIX links data sources to the technique, not to each indicator.",
-  "how_status_is_decided": "src/indicators.py: an indicator is 'answerable' when every term in 'needs' exists in mapping/tx_ontology.ttl, 'partial' when some do, 'unanswerable' when none do. Rules named in 'data_rules' report 'cannot check' when violated, not 'does not hold'. Indicators with mode 'facts_only' get state 'facts_only' and a 'facts' block instead of held / not held.",
-  "data_sources": {
-    "DS0019": {
-      "name": "Transaction Logs",
-      "here": "yes"
-    },
-    "DS0047": {
-      "name": "Correspondent and Cross-Border Transaction Data",
-      "here": "partial",
-      "note": "only is_same_bank; no intermediary banks, routes or jurisdictions"
-    },
-    "DS0004": {
-      "name": "Customs and Border Records",
-      "here": "no"
-    },
-    "DS0013": {
-      "name": "Contractual and Invoice Data",
-      "here": "no"
-    },
-    "DS0030": {
-      "name": "Business Activity and Operations",
-      "here": "no"
-    },
-    "DS0036": {
-      "name": "Trade Documentation",
-      "here": "no"
-    },
-    "DS0039": {
-      "name": "KYC & Customer Due Diligence Records",
-      "here": "partial",
-      "note": "synthetic kyc_profiles: customer type, industry, tenure, PEP, risk rating, used only as account context; no beneficial ownership, no account relationships, no addresses"
-    },
-    "DS0049": {
-      "name": "Company & Beneficial Ownership Registries",
-      "here": "no"
-    }
-  },
+  "status": "DRAFT by Claude, 2026-11-08. Not reviewed by the user or a domain expert. 'rules' are Claude's reading. What each indicator needs, and where each AML term is recorded (its typology data source), live in ontology/application/typology_requirements.ttl, and which table provides which source in mappings/transaction/tx_features.r2rml.ttl (all also our reading). The per-source 'available here' marks that used to be typed here are now derived by src/sources.py (and asked of Ontop by src/typology.py).",
+  "how_status_is_decided": "src/indicators.py: an indicator is 'answerable' when every term the indicator needs (ontology/application/typology_requirements.ttl, merged into each entry as 'needs' by registry()) exists in the source vocabulary or has a data term under it in ontology/alignment/aml_data_alignment.ttl, 'partial' when some do, 'unanswerable' when none do. Rules named in 'data_rules' report 'cannot check' when violated, not 'does not hold'. Indicators with mode 'facts_only' get state 'facts_only' and a 'facts' block instead of held / not held.",
   "mitigations_not_modelled": [
     "M0002",
     "M0004",
@@ -59,15 +23,6 @@
       "id": "IND02191",
       "text": "Cyclical patterns in funds or asset transfers that ultimately revert to the same origin across multiple accounts or entities, lacking a legitimate business rationale.",
       "m0_mark": "yes",
-      "data_sources": [
-        "DS0019"
-      ],
-      "needs": [
-        "fcd:Transaction",
-        "fcd:fromAccount",
-        "fcd:toAccount",
-        "fcd:timestamp"
-      ],
       "shape": "ex:CircularTransactionShape",
       "shape_status": "runnable, checked against 19 gold cases",
       "rules": [
@@ -88,15 +43,6 @@
       "id": "IND02195",
       "text": "Frequent cross-border inter-bank transfers involving convoluted routing paths, including multiple hops in high-risk or offshore jurisdictions, lacking clear business justification.",
       "m0_mark": "partial",
-      "data_sources": [
-        "DS0019",
-        "DS0047"
-      ],
-      "needs": [
-        "fcd:Transaction",
-        "fcd:sameBank",
-        "fcd:Jurisdiction"
-      ],
       "shape": "ex:ConvolutedRoutingShape",
       "shape_status": "facts only: no threshold and no verdict (the typology gives no number for 'multiple hops'); the shape holds one data-availability rule",
       "rules": [
@@ -121,14 +67,6 @@
       "id": "IND02192",
       "text": "Multiple intra-group and inter-company transfers with minimal or no supporting documentation or economic justification.",
       "m0_mark": "no",
-      "data_sources": [
-        "DS0013",
-        "DS0049"
-      ],
-      "needs": [
-        "fcd:CompanyGroup",
-        "fcd:SupportingDocument"
-      ],
       "shape": "ex:IND02192Skeleton",
       "shape_status": "skeleton",
       "rules": [],
@@ -141,13 +79,6 @@
       "id": "IND02193",
       "text": "Repeated use of identical VAT invoices or tax reclaim documents across multiple transactions without evidence of corresponding goods or services.",
       "m0_mark": "no",
-      "data_sources": [
-        "DS0013"
-      ],
-      "needs": [
-        "fcd:Invoice",
-        "fcd:Shipment"
-      ],
       "shape": "ex:IND02193Skeleton",
       "shape_status": "skeleton",
       "rules": [],
@@ -160,14 +91,6 @@
       "id": "IND02194",
       "text": "Frequent formation or acquisition of legal entities with no apparent operational presence, coupled with repeated changes in beneficial ownership.",
       "m0_mark": "no",
-      "data_sources": [
-        "DS0039",
-        "DS0049"
-      ],
-      "needs": [
-        "fcd:LegalEntity",
-        "fcd:BeneficialOwnerChange"
-      ],
       "shape": "ex:IND02194Skeleton",
       "shape_status": "skeleton",
       "rules": [],
@@ -180,14 +103,6 @@
       "id": "IND02196",
       "text": "Significant discrepancies between reported trade volumes and actual business operations, such as low-activity companies handling disproportionately large transaction volumes.",
       "m0_mark": "no",
-      "data_sources": [
-        "DS0030",
-        "DS0019"
-      ],
-      "needs": [
-        "fcd:DeclaredBusinessActivity",
-        "fcd:amountRaw"
-      ],
       "shape": "ex:IND02196Skeleton",
       "shape_status": "skeleton",
       "rules": [],
@@ -200,15 +115,6 @@
       "id": "IND02197",
       "text": "Detectable circular trade patterns in shipping and invoicing records, including repetitive shipments of identical goods and mismatched invoice values or inconsistent documentation.",
       "m0_mark": "no",
-      "data_sources": [
-        "DS0036",
-        "DS0004",
-        "DS0013"
-      ],
-      "needs": [
-        "fcd:Shipment",
-        "fcd:Invoice"
-      ],
       "shape": "ex:IND02197Skeleton",
       "shape_status": "skeleton",
       "rules": [],
@@ -221,14 +127,6 @@
       "id": "IND02198",
       "text": "Frequent establishment and dissolution of trading entities, alongside repeated changes to account or ownership details, all lacking transparent operational explanations.",
       "m0_mark": "no",
-      "data_sources": [
-        "DS0049",
-        "DS0039"
-      ],
-      "needs": [
-        "fcd:LegalEntity",
-        "fcd:EntityLifecycleEvent"
-      ],
       "shape": "ex:IND02198Skeleton",
       "shape_status": "skeleton",
       "rules": [],
@@ -241,14 +139,6 @@
       "id": "IND02199",
       "text": "Regularly documented shipments or services appear in official records without any corroborating logistics or operational evidence, indicating potential phantom transactions.",
       "m0_mark": "no",
-      "data_sources": [
-        "DS0036",
-        "DS0004"
-      ],
-      "needs": [
-        "fcd:Shipment",
-        "fcd:LogisticsEvidence"
-      ],
       "shape": "ex:IND02199Skeleton",
       "shape_status": "skeleton",
       "rules": [],
@@ -257,5 +147,46 @@
         "no logistics records"
       ]
     }
-  ]
+  ],
+  "rule_info": {
+    "origin_named": {
+      "source": "structure",
+      "text": "The candidate names the account where the funds start (the first leg's payer)."
+    },
+    "first_leg_starts_at_origin": {
+      "source": "text",
+      "text": "The first leg starts at the origin account."
+    },
+    "last_leg_returns_to_origin": {
+      "source": "text",
+      "text": "The last leg ends at the origin account: the funds revert to where they started."
+    },
+    "consecutive_legs_connect": {
+      "source": "read",
+      "text": "Each leg pays from the account the previous leg paid to."
+    },
+    "legs_in_time_order": {
+      "source": "added",
+      "text": "Legs are in time order (kept by decision, not in the typology text)."
+    },
+    "at_least_2_accounts": {
+      "source": "read",
+      "text": "The pattern involves more than one account (the typology says 'multiple accounts')."
+    },
+    "business_rationale_recorded": {
+      "source": "text",
+      "text": "Warning only: a business rationale is recorded for the cycle. The data holds none, so this never fires here."
+    },
+    "route_bank_known": {
+      "source": "data",
+      "text": "Every leg says whether it stays within one bank; otherwise the between-bank count is not available."
+    }
+  },
+  "rule_source_legend": {
+    "text": "close to the words of the indicator",
+    "read": "our reading of the words",
+    "added": "a decision of this project, not in the typology",
+    "structure": "needed to build the candidate",
+    "data": "data availability, not a pattern rule"
+  }
 }

@@ -1,0 +1,23 @@
+@prefix fcd: <https://example.org/fincrime-data#> .
+@prefix amd: <https://example.org/aml-data#> .
+
+# How a term is named as a SPARQL variable, how an entity is identified in a query, and what its query is called. Not about any technique or
+# indicator: it is a fact about the vocabularies (ontology/alignment/source_vocabulary.ttl, ontology/core/aml_core.ttl) that the code reads to build a
+# query's required variables, so the pipeline, the gold SPARQL and the query checks agree on column names. Read by src/queryplan.py.
+# fcd:mayBeAbsent: some rows have no value (industry is absent for individuals), so the query must wrap it in OPTIONAL.
+
+# evidence: AML terms (what the indicators need)
+amd:FundsTransfer fcd:identifiedBy amd:transferId ; fcd:queryKey "transaction" .
+amd:transferId            fcd:queryVar "txid" .
+amd:transferTime          fcd:queryVar "ts" .
+amd:originator            fcd:queryVar "from" .
+amd:beneficiary           fcd:queryVar "to" .
+amd:sameInstitution       fcd:queryVar "sameBank" .
+
+# background: data terms (our KYC table)
+fcd:Account               fcd:queryVar "account" ; fcd:queryKey "account" .
+fcd:customerType          fcd:queryVar "customerType" .
+fcd:industry              fcd:queryVar "industry" ; fcd:mayBeAbsent true .
+fcd:onboardingTenureDays  fcd:queryVar "tenure" .
+fcd:pepFlag               fcd:queryVar "pep" .
+fcd:riskRating            fcd:queryVar "risk" .

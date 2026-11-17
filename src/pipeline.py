@@ -17,7 +17,7 @@ import queries  # noqa: E402
 from ontop_run import run_ontop  # noqa: E402
 
 ACC = "https://example.org/account/"
-LEG_COLUMNS = ["txid", "ts", "from", "to", "amountLog"]
+LEG_COLUMNS = ["txid", "ts", "from", "to"]            # amountLog and sameBank are read when the query returns them
 CONTEXT_COLUMNS = ["account", "customerType", "tenure", "pep", "risk"]   # industry is optional (absent for individuals)
 
 
@@ -44,8 +44,9 @@ def parse_legs(csv_rows):
     _need(csv_rows, LEG_COLUMNS, "legs")
     out = []
     for r in csv_rows:
-        row = {"tx_id": int(r["txid"]), "ts": r["ts"], "from": _acc(r["from"]), "to": _acc(r["to"]),
-               "amount_log": float(r["amountLog"])}
+        row = {"tx_id": int(r["txid"]), "ts": r["ts"], "from": _acc(r["from"]), "to": _acc(r["to"])}
+        if r.get("amountLog") not in (None, ""):
+            row["amount_log"] = float(r["amountLog"])
         if "sameBank" in r:
             row["same_bank"] = r["sameBank"] == "true"
         out.append(row)

@@ -1,0 +1,62 @@
+@prefix amd:   <https://example.org/aml-data#> .
+@prefix fcd:   <https://example.org/fincrime-data#> .
+@prefix align: <https://example.org/align#> .
+@prefix amx:   <https://example.org/amltrix/> .
+
+# MODULE 3 of the semantic layer: the typology requirement layer. It connects the published typology (module 1) to the AML core ontology (module 2):
+#   1. where each AML term is recorded: "align:recordedIn amx:DSxxxx", a data source of the typology (data source requirements);
+#   2. what each indicator needs: "align:needsTerm", in AML terms (indicator and evidence requirements);
+#   3. which account background to show for a technique: "align:backgroundTerm", in data terms (context requirements).
+# Split on 2026-11-10 from mapping/aml_layer.ttl. There is no "why" per requirement yet: the typology gives one sentence per indicator and these
+# lines are our reading of it.
+# DRAFT by Claude (needs 2026-11-08, term sources 2026-11-10). Not reviewed by the user or a domain expert. The typology does not say which data an
+# indicator needs, and links data sources to a technique only, not to an indicator or a term: all of it is OUR reading.
+# Read by: src/indicators.py (needs, background), src/sources.py (recordedIn), src/typology.py (copies all three into the generated
+# generated/typology_alignment.ttl that Ontop reads).
+# The needs are AML terms, not data terms: which data term answers one is module 4, so a change of database leaves this file alone.
+
+# ---- Where each term is recorded: a data source of the typology (DRAFT, our reading). A term may be recorded in more than one.
+# DS0019 Transaction Logs
+amd:FundsTransfer align:recordedIn amx:DS0019 .
+amd:Account align:recordedIn amx:DS0019 .
+amd:transferId align:recordedIn amx:DS0019 .
+amd:transferTime align:recordedIn amx:DS0019 .
+amd:originator align:recordedIn amx:DS0019 .
+amd:beneficiary align:recordedIn amx:DS0019 .
+amd:amountRaw align:recordedIn amx:DS0019 .
+# DS0047 Correspondent and Cross-Border Transaction Data
+amd:sameInstitution align:recordedIn amx:DS0047 .
+amd:Jurisdiction align:recordedIn amx:DS0047 .
+# DS0013 Contractual and Invoice Data
+amd:Invoice align:recordedIn amx:DS0013 .
+amd:SupportingDocument align:recordedIn amx:DS0013 .
+# DS0004 Customs and Border Records
+amd:Shipment align:recordedIn amx:DS0004 .
+# DS0036 Trade Documentation
+amd:Shipment align:recordedIn amx:DS0036 .
+amd:SupportingDocument align:recordedIn amx:DS0036 .
+amd:LogisticsEvidence align:recordedIn amx:DS0036 .
+# DS0030 Business Activity and Operations
+amd:DeclaredBusinessActivity align:recordedIn amx:DS0030 .
+# DS0049 Company and Beneficial Ownership Registries
+amd:CompanyGroup align:recordedIn amx:DS0049 .
+amd:LegalEntity align:recordedIn amx:DS0049 .
+amd:BeneficialOwnerChange align:recordedIn amx:DS0049 .
+amd:EntityLifecycleEvent align:recordedIn amx:DS0049 .
+# DS0039 KYC and Customer Due Diligence Records
+amd:LegalEntity align:recordedIn amx:DS0039 .
+
+# ==== Part 3: the Alignment (SOURCE OF TRUTH for "which terms an indicator needs"; edit here, nothing else holds it)
+amx:IND02191 align:needsTerm amd:FundsTransfer , amd:originator , amd:beneficiary , amd:transferTime .
+amx:IND02195 align:needsTerm amd:FundsTransfer , amd:sameInstitution , amd:Jurisdiction .
+amx:IND02192 align:needsTerm amd:CompanyGroup , amd:SupportingDocument .
+amx:IND02193 align:needsTerm amd:Invoice , amd:Shipment .
+amx:IND02194 align:needsTerm amd:LegalEntity , amd:BeneficialOwnerChange .
+amx:IND02196 align:needsTerm amd:DeclaredBusinessActivity , amd:amountRaw .
+amx:IND02197 align:needsTerm amd:Shipment , amd:Invoice .
+amx:IND02198 align:needsTerm amd:LegalEntity , amd:EntityLifecycleEvent .
+amx:IND02199 align:needsTerm amd:Shipment , amd:LogisticsEvidence .
+
+# Background shown to the investigator for a technique. NOT evidence for any indicator: no rule and no verdict reads it.
+# These are data terms (fcd:), not AML terms: they are about our KYC table, not about what an indicator talks about.
+amx:T0039 align:backgroundTerm fcd:customerType , fcd:industry , fcd:onboardingTenureDays , fcd:pepFlag , fcd:riskRating .

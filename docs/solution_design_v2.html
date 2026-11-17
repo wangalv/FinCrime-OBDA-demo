@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Solution design v2: the six-layer AML semantic layer</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm 20mm 18mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 1.5; color: #1f2328; margin: 0; }
+  h1 { font-size: 20pt; line-height: 1.2; margin: 0 0 4pt; font-weight: 600; }
+  h2 { font-size: 13pt; margin: 22pt 0 6pt; font-weight: 600; border-bottom: 0.5pt solid #b8bcc2; padding-bottom: 3pt; break-after: avoid; }
+  h3 { font-size: 10.5pt; margin: 12pt 0 3pt; font-weight: 600; break-after: avoid; }
+  p { margin: 0 0 6pt; }
+  ul, ol { margin: 0 0 6pt; padding-left: 16pt; }
+  li { margin-bottom: 2pt; }
+  code { font-family: Menlo, "SF Mono", Consolas, monospace; font-size: 8.6pt; background: #f2f3f5; padding: 0 2pt; border-radius: 2pt; }
+  .sub { color: #57606a; font-size: 10.5pt; margin-bottom: 10pt; }
+  .meta { color: #57606a; font-size: 8.8pt; margin-bottom: 10pt; }
+  .status { border: 0.6pt solid #b8860b; background: #fff8e1; padding: 7pt 10pt; font-size: 9pt; margin: 8pt 0 10pt; }
+  .status b { color: #6b4e00; }
+  table { border-collapse: collapse; width: 100%; margin: 4pt 0 10pt; font-size: 8.6pt; line-height: 1.38; }
+  th, td { border: 0.5pt solid #c3c7cc; padding: 3.5pt 5pt; vertical-align: top; text-align: left; }
+  th { background: #eef0f2; font-weight: 600; }
+  tr { break-inside: avoid; }
+  .fig { margin: 8pt 0 4pt; text-align: center; break-inside: avoid; }
+  .cap { font-size: 8.6pt; color: #57606a; margin: 2pt 0 10pt; }
+  .chain { border: 0.5pt solid #c3c7cc; background: #fafbfc; padding: 6pt 9pt; margin: 6pt 0 10pt; font-size: 9pt; break-inside: avoid; }
+  .chain div { margin: 1pt 0; }
+  .chain .k { display: inline-block; width: 74pt; color: #57606a; }
+  .page-break { break-before: page; }
+  .small { font-size: 8.6pt; color: #444c54; }
+  .ok { color: #1a7f37; font-weight: 600; } .no { color: #a40e26; font-weight: 600; } .part { color: #9a6700; font-weight: 600; }
+  .foot { font-size: 8.4pt; color: #57606a; border-top: 0.5pt solid #b8bcc2; margin-top: 16pt; padding-top: 6pt; }
+
+pre{font-family:Menlo,"SF Mono",Consolas,monospace;font-size:7.8pt;line-height:1.4;background:#f6f7f8;border:0.5pt solid #d0d4d8;padding:5pt 7pt;margin:3pt 0 8pt;white-space:pre-wrap;break-inside:avoid}
+.lay{margin:4pt 0 8pt}.lay td:first-child{width:14%;font-weight:600;background:#f6f7f8}
+.box2{border:0.6pt solid #0f6e56;background:#e8f6f0;padding:7pt 10pt;font-size:9pt;margin:8pt 0 10pt}
+</style></head><body>
+
+<h1>Solution design v2: the six-layer AML semantic layer</h1>
+<div class="sub">What each layer is, who owns it, what it holds today, and how a question travels through it</div>
+<div class="meta">Working draft, 2026-11-10 &nbsp;|&nbsp; Readers: AML and financial-crime practitioners, and the engineers who would maintain the solution &nbsp;|&nbsp; Scope: one typology technique, T0039 Circular Transactions</div>
+
+<div class="status"><b>Status: draft, not reviewed by a domain expert.</b> Layers 2 to 6 are our own reading of the typology text: the AML vocabulary, what each indicator needs, which data source holds each term, which table provides which source, and the rules that check the indicators. The transaction data and the customer profiles are synthetic. No accuracy measurement has been made; the model runs reported here are small trials.</div>
+
+<h2>1. What this version is</h2>
+<p>The first solution design described the pipeline and four knowledge layers. This version organises the knowledge as <b>six layers</b>, each with one kind of content and one owner, and treats layers 2 to 5 as <b>the semantic layer</b>: the part that defines what the data means in AML terms and how each term reaches a column. Layer 1 supplies external domain knowledge; layer 6 consumes the semantic layer, validates the evidence it returns and produces the verdicts. The files were reorganised to match, and every file path is named in one place (<code>src/paths.py</code>).</p>
+
+<div class="box2"><b>The semantic layer in one sentence.</b> A question put in AML terms (&ldquo;what does indicator IND02191 need, for these transfers?&rdquo;) is answered from the database without anyone writing SQL: layer 3 says what is needed, layer 2 gives the terms, layer 4 says which of our data terms answer them, and layer 5 says which columns hold them. Ontop turns that chain into SQL.</div>
+
+<table>
+<tr><th style="width:17%">Layer</th><th style="width:13%">Owner</th><th style="width:38%">What it holds today</th><th>Files</th></tr>
+<tr><td>1 External knowledge</td><td>Publisher</td><td>The published typology: AMLO schema (19 classes, 23 object properties), typology data (T0039: 9 indicators, 8 data sources).</td><td><code>ontology/amlo.ttl</code>, <code>vendor/amltrix/</code>, <code>ontology/external/amltrix/typology_adapter.ttl</code></td></tr>
+<tr><td>2 AML core ontology</td><td>Business</td><td>18 AML terms: 7 the data can answer, 11 it cannot.</td><td><code>ontology/core/aml_core.ttl</code></td></tr>
+<tr><td>3 Typology requirements</td><td>AML knowledge</td><td>What 9 indicators need (21 statements), where terms are recorded (21 source statements), background for T0039 (5 terms).</td><td><code>ontology/application/typology_requirements.ttl</code></td></tr>
+<tr><td>4 Data semantic and alignment</td><td>Data owner</td><td>11 data terms for our two tables; 7 alignment axioms to the AML terms.</td><td><code>ontology/alignment/source_vocabulary.ttl</code>, <code>aml_data_alignment.ttl</code></td></tr>
+<tr><td>5 OBDA mapping</td><td>Engineering</td><td>2 R2RML mappings, 1 lens file (2 views), the connection, which source each table provides.</td><td><code>mappings/transaction/</code>, <code>mappings/customer/</code>, <code>mappings/lenses/</code>, <code>config/ontop/</code></td></tr>
+<tr><td>6 Validation and execution</td><td>AML knowledge + engineering</td><td>9 SHACL rule checks, a registry of 9 indicators, verdicts built from both.</td><td><code>validation/shapes/t0039.shapes.ttl</code>, <code>validation/indicator_registry.json</code></td></tr>
+</table>
+
+<h2>2. The use case in brief</h2>
+<p>An investigator has a handful of transfers and asks a question an investigator can act on: <b>does what I see fit a known typology technique, indicator by indicator, and what can the available data not tell me?</b> The answer has to use the typology&rsquo;s own words, say plainly where the data stops, and be produced without customer data leaving the institution. The solution is not a suspicion score, a SAR decision or a search for suspicious transfers: the investigator supplies the transfer ids.</p>
+<ol>
+<li>The investigator describes the case and gives the transfer ids.</li>
+<li>The system identifies the typology technique from the published typology (layer 1), or asks, or offers up to three candidates.</li>
+<li>It retrieves what each indicator of that technique needs for the named transfers (layers 3, 2, 4, 5), and only that.</li>
+<li>It checks the pattern on what came back and reports each indicator as: structure matches, does not hold (with the failed rule), facts only, or cannot check here (layer 6). A gap is named by the typology data source that would hold the data.</li>
+<li>It shows account background as context and summarises in plain words, checked against the verdicts.</li>
+</ol>
+<p><b>Worked example.</b> The investigator gives transfers 2131053, 2204314 and 2282865 and describes money going round in a circle. The system selects T0039, retrieves 12 rows in about two seconds, and reports: IND02191 <span class="ok">structure matches</span> (the funds go round in time order and return to the first account; the business-rationale part is not checked); IND02195 <span class="part">facts only</span> (3 hops, 3 of them between banks; the typology gives no threshold, and cross-border is not in the data); and the other seven <span class="no">cannot check here</span>, each naming the data source that would hold what is missing, for example IND02193 needs Contractual and Invoice Data, Customs and Border Records and Trade Documentation.</p>
+
+<h2 class="page-break">3. The six-layer architecture</h2>
+<div class="fig"><svg width="100%" viewBox="0 0 680 540" role="img" xmlns="http://www.w3.org/2000/svg" style="max-height:150mm">
+<title>The six knowledge layers</title>
+<defs><style>
+ .t{font:14px Helvetica,Arial,sans-serif;fill:#2c2c2a}.th{font:500 14px Helvetica,Arial,sans-serif;fill:#2c2c2a}.ts{font:12px Helvetica,Arial,sans-serif;fill:#5f5e5a}
+ .gray rect{fill:#f1efe8;stroke:#5f5e5a}.teal rect{fill:#e1f5ee;stroke:#0f6e56}.blue rect{fill:#e6f1fb;stroke:#185fa5}
+ .teal .th{fill:#085041}.teal .ts{fill:#0f6e56}.blue .th{fill:#0c447c}.blue .ts{fill:#185fa5}
+ .br{stroke:#0f6e56;stroke-width:1.4;fill:none}
+</style></defs>
+<g class="gray"><rect x="40" y="20" width="430" height="72" rx="8" stroke-width="0.7"/><text class="th" x="255" y="38" text-anchor="middle" dominant-baseline="central">1  External knowledge layer</text><text class="ts" x="255" y="58" text-anchor="middle" dominant-baseline="central">AMLTRIX today; FATF and AUSTRAC possible</text><text class="ts" x="255" y="76" text-anchor="middle" dominant-baseline="central">Owner: the publisher. Authoritative; not edited.</text></g>
+<g class="teal"><rect x="40" y="106" width="430" height="72" rx="8" stroke-width="0.7"/><text class="th" x="255" y="124" text-anchor="middle" dominant-baseline="central">2  AML core domain ontology</text><text class="ts" x="255" y="144" text-anchor="middle" dominant-baseline="central">FundsTransfer, Account, Jurisdiction, Invoice, ...</text><text class="ts" x="255" y="162" text-anchor="middle" dominant-baseline="central">Owner: the business. Names no database, no typology.</text></g>
+<g class="teal"><rect x="40" y="192" width="430" height="72" rx="8" stroke-width="0.7"/><text class="th" x="255" y="210" text-anchor="middle" dominant-baseline="central">3  Typology requirements</text><text class="ts" x="255" y="230" text-anchor="middle" dominant-baseline="central">what each indicator needs, and which source holds it</text><text class="ts" x="255" y="248" text-anchor="middle" dominant-baseline="central">Owner: AML knowledge.</text></g>
+<g class="teal"><rect x="40" y="278" width="430" height="72" rx="8" stroke-width="0.7"/><text class="th" x="255" y="296" text-anchor="middle" dominant-baseline="central">4  Data semantic and alignment</text><text class="ts" x="255" y="316" text-anchor="middle" dominant-baseline="central">vocabulary of our tables, aligned to the AML terms</text><text class="ts" x="255" y="334" text-anchor="middle" dominant-baseline="central">Owner: the data owner.</text></g>
+<g class="teal"><rect x="40" y="364" width="430" height="72" rx="8" stroke-width="0.7"/><text class="th" x="255" y="382" text-anchor="middle" dominant-baseline="central">5  OBDA mapping</text><text class="ts" x="255" y="402" text-anchor="middle" dominant-baseline="central">R2RML, lens, connection; which source a table provides</text><text class="ts" x="255" y="420" text-anchor="middle" dominant-baseline="central">Owner: engineering.</text></g>
+<g class="blue"><rect x="40" y="450" width="430" height="72" rx="8" stroke-width="0.7"/><text class="th" x="255" y="468" text-anchor="middle" dominant-baseline="central">6  Validation and execution</text><text class="ts" x="255" y="488" text-anchor="middle" dominant-baseline="central">SHACL rules, indicator registry, verdicts, provenance</text><text class="ts" x="255" y="506" text-anchor="middle" dominant-baseline="central">Consumes layers 2 to 5; produces auditable verdicts.</text></g>
+<path d="M482 110 L494 110 L494 432 L482 432" class="br"/>
+<text class="th" x="506" y="206">Semantic layer</text><text class="ts" x="506" y="226">layers 2 to 5:</text><text class="ts" x="506" y="244">the semantic and</text><text class="ts" x="506" y="262">data access</text><text class="ts" x="506" y="280">foundation</text><g class="gray"><rect x="506" y="364" width="134" height="72" rx="8" stroke-width="0.7"/><text class="th" x="573" y="384" text-anchor="middle" dominant-baseline="central">OBDA engine</text><text class="ts" x="573" y="406" text-anchor="middle" dominant-baseline="central">Ontop + DuckDB</text></g>
+</svg>
+<div class="cap">Figure 1. The six knowledge layers and the OBDA engine. Layers 2 to 5 are the semantic layer.</div></div>
+<p>Layers 2 to 5 provide the semantic and data access foundation. Layer 1 supplies external domain knowledge, and layer 6 consumes and validates the resulting evidence. The layers depend on each other as follows.</p>
+<table>
+<tr><th style="width:18%">Layer</th><th style="width:30%">Depends on</th><th style="width:26%">Used by</th><th>Changes when</th></tr>
+<tr><td>1 External knowledge</td><td>Nothing of ours</td><td>3 (indicators, sources), 6</td><td>A new typology release is published</td></tr>
+<tr><td>2 AML core ontology</td><td>Nothing</td><td>3, 4</td><td>The business adds a concept</td></tr>
+<tr><td>3 Typology requirements</td><td>1 (indicator and source ids) and 2 (terms)</td><td>6, the query step</td><td>A practitioner changes what an indicator needs</td></tr>
+<tr><td>4 Data semantic and alignment</td><td>2 (the terms it points up to)</td><td>5, the rewrite step</td><td>The database changes</td></tr>
+<tr><td>5 OBDA mapping</td><td>4 (the data terms it maps)</td><td>Ontop</td><td>The database changes</td></tr>
+<tr><td>6 Validation and execution</td><td>1, 3 and the data returned through 2 to 5</td><td>The investigator, the summary</td><td>A rule or a verdict definition changes</td></tr>
+</table>
+
+<h2>4. The layers one by one</h2>
+
+<h3>4.1 Layer 1: external knowledge</h3>
+<table class="lay">
+<tr><td>Purpose</td><td>The published typology stays authoritative. Techniques, indicators, data sources and their relations are read, never rewritten.</td></tr>
+<tr><td>Owner</td><td>The publisher (AMLTRIX 1.0-beta.4 by UAB Amlyze). We own only the small adapter.</td></tr>
+<tr><td>Holds</td><td>AMLO, a schema for the typology: 19 classes (Tactic, Technique, SubTechnique, Indicator, DataSource, Mitigation, &hellip;), 23 object properties (<code>isIndicatedBy</code>, <code>isIdentifiedIn</code>, <code>achievesTactic</code> and its inverse, &hellip;). The typology data as CSV files. An adapter that makes Ontop read a few standard properties (SKOS labels, definitions).</td></tr>
+<tr><td>Files</td><td><code>ontology/amlo.ttl</code> (stays at the top level: the older part of the repository uses it), <code>vendor/amltrix/*.csv</code> (not edited), <code>ontology/external/amltrix/typology_adapter.ttl</code>, and the generated <code>generated/amltrix.r2rml.ttl</code> that maps the CSV files.</td></tr>
+<tr><td>Hands on</td><td>The technique catalogue for intent analysis (8 tactics, 302 techniques and sub-techniques); for T0039, its 9 indicators with their text and its 8 data sources.</td></tr>
+<tr><td>Not yet</td><td>FATF and AUSTRAC typologies. Only AMLTRIX is connected.</td></tr>
+</table>
+<pre>amx:T0039  amlo:isIndicatedBy  amx:IND02191 , amx:IND02195 , ...      (9 indicators)
+amx:T0039  amlo:isIdentifiedIn amx:DS0019 , amx:DS0047 , ...          (8 data sources)</pre>
+
+<h3>4.2 Layer 2: AML core domain ontology</h3>
+<table class="lay">
+<tr><td>Purpose</td><td>The canonical AML vocabulary: business concepts and their relations, independent of any database and any typology.</td></tr>
+<tr><td>Owner</td><td>The business.</td></tr>
+<tr><td>Holds</td><td>18 terms (12 classes, 6 properties). Seven are answerable from our data: FundsTransfer, Account, transferId, transferTime, originator, beneficiary, sameInstitution. Eleven are declared with nothing under them, which is how &ldquo;the data cannot answer this&rdquo; is stated: Jurisdiction, Invoice, Shipment, LegalEntity, CompanyGroup, SupportingDocument, BeneficialOwnerChange, DeclaredBusinessActivity, amountRaw, LogisticsEvidence, EntityLifecycleEvent.</td></tr>
+<tr><td>File</td><td><code>ontology/core/aml_core.ttl</code></td></tr>
+<tr><td>Hands on</td><td>The terms that layer 3 uses to say what an indicator needs, and that layer 4 points up to.</td></tr>
+<tr><td>Not yet</td><td>Party and Company; a choice between Transaction and FundsTransfer; a hierarchy among the AML terms. The namespace is a placeholder.</td></tr>
+</table>
+<pre>amd:originator a owl:ObjectProperty ; rdfs:domain amd:FundsTransfer ; rdfs:range amd:Account ;
+    rdfs:comment "The account the funds leave (the paying account)." .
+amd:Jurisdiction a owl:Class ; rdfs:comment "The country or legal territory ... The data has no country." .</pre>
+
+<h3>4.3 Layer 3: typology requirements</h3>
+<table class="lay">
+<tr><td>Purpose</td><td>Connects the external typology (layer 1) to the AML vocabulary (layer 2): what each indicator needs, which data source holds each term, and which background to show. Declared once, in AML terms, never inside a query.</td></tr>
+<tr><td>Owner</td><td>AML knowledge. The typology gives each indicator one sentence and does not say what data it needs, nor which source holds which term, so every statement is our reading.</td></tr>
+<tr><td>Holds</td><td><code>needsTerm</code> (indicator requirements, 21 statements for 9 indicators), <code>recordedIn</code> (data source requirements, 21 statements), <code>backgroundTerm</code> (context requirements, 5 terms for T0039).</td></tr>
+<tr><td>File</td><td><code>ontology/application/typology_requirements.ttl</code></td></tr>
+<tr><td>Hands on</td><td>To the query step, what to fetch; to layer 6, which indicators can be checked and which source a gap belongs to.</td></tr>
+<tr><td>Not yet</td><td>A &ldquo;why&rdquo; for each requirement; a separate type for evidence requirements as against indicator requirements; any technique other than T0039.</td></tr>
+</table>
+<pre>amx:IND02191 align:needsTerm amd:FundsTransfer , amd:originator , amd:beneficiary , amd:transferTime .
+amd:Invoice  align:recordedIn amx:DS0013 .                          (Contractual and Invoice Data)
+amx:T0039    align:backgroundTerm fcd:customerType , fcd:industry , fcd:onboardingTenureDays , fcd:pepFlag , fcd:riskRating .</pre>
+<p><b>Data sources of T0039.</b> The typology lists eight data sources for the technique. Layers 3 and 5 add which AML terms each holds and which table provides it. Ontop answers &ldquo;which sources, which terms, which are covered&rdquo;, and code reads the same chain from the files and compares.</p>
+<table>
+<tr><th style="width:9%">Source</th><th style="width:22%">Name</th><th style="width:10%">This database</th><th style="width:27%">AML terms recorded in it</th><th style="width:15%">Not answered</th><th>Provided by table</th></tr>
+<tr><td>DS0004</td><td>Customs and Border Records</td><td><span class="no">not here</span></td><td>Shipment</td><td>Shipment</td><td>&mdash;</td></tr>
+<tr><td>DS0013</td><td>Contractual and Invoice Data</td><td><span class="no">not here</span></td><td>Invoice, SupportingDocument</td><td>Invoice, SupportingDocument</td><td>&mdash;</td></tr>
+<tr><td>DS0019</td><td>Transaction Logs</td><td><span class="part">partly</span></td><td>Account, FundsTransfer, amountRaw, beneficiary, originator, transferId, transferTime</td><td>amountRaw</td><td>tx</td></tr>
+<tr><td>DS0030</td><td>Business Activity and Operations</td><td><span class="no">not here</span></td><td>DeclaredBusinessActivity</td><td>DeclaredBusinessActivity</td><td>&mdash;</td></tr>
+<tr><td>DS0036</td><td>Trade Documentation</td><td><span class="no">not here</span></td><td>LogisticsEvidence, Shipment, SupportingDocument</td><td>LogisticsEvidence, Shipment, SupportingDocument</td><td>&mdash;</td></tr>
+<tr><td>DS0039</td><td>KYC &amp; Customer Due Diligence Records</td><td><span class="part">background only</span></td><td>LegalEntity</td><td>LegalEntity</td><td>kyc</td></tr>
+<tr><td>DS0047</td><td>Correspondent and Cross-Border Transaction Data</td><td><span class="part">partly</span></td><td>Jurisdiction, sameInstitution</td><td>Jurisdiction</td><td>tx</td></tr>
+<tr><td>DS0049</td><td>Company &amp; Beneficial Ownership Registries</td><td><span class="no">not here</span></td><td>BeneficialOwnerChange, CompanyGroup, EntityLifecycleEvent, LegalEntity</td><td>BeneficialOwnerChange, CompanyGroup, EntityLifecycleEvent, LegalEntity</td><td>&mdash;</td></tr>
+</table>
+<p class="small">&ldquo;Available&rdquo;: every term recorded in the source has a data term under it. &ldquo;Partly&rdquo;: some do. &ldquo;Background only&rdquo;: no AML term is answered from it but a table provides it (the synthetic profiles). Transaction Logs counts as partly because the raw amount is recorded there and the data holds only a logarithm of it.</p>
+
+<h3>4.4 Layer 4: data semantic and alignment</h3>
+<table class="lay">
+<tr><td>Purpose</td><td>Explains how our data concepts relate to the AML concepts. It has two parts: the vocabulary of our tables, and the alignment that says which AML term each data term is a kind of.</td></tr>
+<tr><td>Owner</td><td>The data owner. Both parts change when the database changes; the AML terms they point up to do not.</td></tr>
+<tr><td>Holds</td><td>Source vocabulary (<code>fcd:</code>): 2 classes and 11 properties, including the limits of the data (no raw amount, no country, tenure with no reference date). Alignment: 7 axioms, using only subclass and subproperty, which is what Ontop can rewrite.</td></tr>
+<tr><td>Files</td><td><code>ontology/alignment/source_vocabulary.ttl</code>, <code>ontology/alignment/aml_data_alignment.ttl</code></td></tr>
+<tr><td>Hands on</td><td>To Ontop, the rewrite from an AML term to the data term; to layer 6, the answer to &ldquo;can the data answer this term?&rdquo;: an AML term with no axiom under it is one it cannot.</td></tr>
+<tr><td>Note</td><td>This layer can be dropped as a separate ontology when a direct mapping to the AML terms would be enough. It is kept because it states, in one place, which AML terms the data can and cannot answer.</td></tr>
+</table>
+<pre>fcd:fromAccount rdfs:subPropertyOf amd:originator .
+fcd:timestamp   rdfs:subPropertyOf amd:transferTime .
+fcd:sameBank    rdfs:subPropertyOf amd:sameInstitution .</pre>
+
+<h3>4.5 Layer 5: OBDA mapping</h3>
+<table class="lay">
+<tr><td>Purpose</td><td>Maps the relational structures into the data vocabulary and implements the virtual data access: no data is copied; Ontop answers from the live tables.</td></tr>
+<tr><td>Owner</td><td>Engineering.</td></tr>
+<tr><td>Holds</td><td>An R2RML mapping for the transfers (table <code>tx</code>) and one for the customer profiles (table <code>kyc</code>), merged into one for Ontop. One lens file with two views that declare each table&rsquo;s key, so that no attribute causes a self-join. The connection to the read-only DuckDB database. On the main triples map of each table, which typology data source the table provides (<code>realisesSource</code>, which R2RML ignores).</td></tr>
+<tr><td>Files</td><td><code>mappings/transaction/tx_features.r2rml.ttl</code>, <code>mappings/customer/customer.r2rml.ttl</code>, <code>mappings/lenses/tx_features.lens.json</code>, <code>config/ontop/ontop-duckdb.properties</code></td></tr>
+<tr><td>Checked</td><td>Queries through Ontop return the same rows as hand-written SQL on all 26 gold cases.</td></tr>
+</table>
+<pre>map:TransactionMap a rr:TriplesMap ;
+    align:realisesSource amx:DS0019 , amx:DS0047 ;
+    rr:logicalTable [ rr:tableName "tx" ] ;
+    rr:predicateObjectMap [ rr:predicate fcd:fromAccount ;
+        rr:objectMap [ rr:template "https://example.org/account/{from_account}" ] ] , ...
+lens:  tx  = view of table tx_features, tx_id declared unique</pre>
+
+<h3>4.6 Layer 6: validation and execution</h3>
+<table class="lay">
+<tr><td>Purpose</td><td>Validates the evidence that came back through layers 2 to 5, evaluates the indicator rules and produces verdicts that can be audited: each verdict says which rule failed, or which data is missing and where it would be.</td></tr>
+<tr><td>Owner</td><td>AML knowledge for the rules, engineering for the execution.</td></tr>
+<tr><td>Holds</td><td>SHACL shapes (9 rule checks, each tagged as close to the typology text, our reading, or added by this project). A registry of 9 indicators with what each indicator&rsquo;s rules do not check. The code that builds the candidate loop from the returned rows and turns the SHACL result into a verdict.</td></tr>
+<tr><td>Files</td><td><code>validation/shapes/t0039.shapes.ttl</code>, <code>validation/shapes/t0039.skeletons.ttl</code> (the seven indicators without rules, not run), <code>validation/indicator_registry.json</code>; code in <code>src/loop_check.py</code>, <code>src/indicators.py</code></td></tr>
+<tr><td>Verdicts</td><td><i>Structure matches the description</i>; <i>does not hold</i> (with the failed rule ids); <i>facts only</i> (IND02195: the typology gives no number for &ldquo;multiple hops&rdquo;); <i>cannot check here</i> (with the missing terms and the sources that would hold them). The state comes from the declarations and the SHACL result, never from the model.</td></tr>
+<tr><td>Not yet</td><td>A separate rules module in code; evidence and provenance kept as a durable audit record (today the rule tags are in the files and each run&rsquo;s SPARQL, SQL, rows and rules are shown on the page, but nothing is stored as a signed or versioned record).</td></tr>
+</table>
+<p><b>Indicator coverage for T0039.</b> What the data can answer, and the sources that would hold the rest.</p>
+<table>
+<tr><th style="width:10%">Indicator</th><th style="width:33%">Typology text (abridged)</th><th style="width:10%">Data can answer</th><th style="width:17%">Needs that are missing</th><th>Sources that would hold them</th></tr>
+<tr><td>IND02191</td><td>Cyclical transfers that revert to the same origin across multiple accounts, lacking a legitimate business rationale.</td><td><span class="ok">Yes</span></td><td>&mdash;</td><td>&mdash;</td></tr>
+<tr><td>IND02195</td><td>Frequent cross-border inter-bank transfers with convoluted routing, including multiple hops in high-risk or offshore jurisdictions.</td><td><span class="part">Partly</span></td><td>Jurisdiction</td><td>Correspondent and Cross-Border Transaction Data</td></tr>
+<tr><td>IND02192</td><td>Intra-group and inter-company transfers with minimal supporting documentation.</td><td><span class="no">No</span></td><td>CompanyGroup, SupportingDocument</td><td>Contractual and Invoice Data; Trade Documentation; Company &amp; Beneficial Ownership Registries</td></tr>
+<tr><td>IND02193</td><td>Repeated use of identical VAT invoices or tax reclaim documents.</td><td><span class="no">No</span></td><td>Invoice, Shipment</td><td>Customs and Border Records; Contractual and Invoice Data; Trade Documentation</td></tr>
+<tr><td>IND02194</td><td>Frequent formation or acquisition of legal entities with no apparent purpose.</td><td><span class="no">No</span></td><td>BeneficialOwnerChange, LegalEntity</td><td>KYC &amp; Customer Due Diligence Records; Company &amp; Beneficial Ownership Registries</td></tr>
+<tr><td>IND02196</td><td>Discrepancies between reported trade volumes and actual business activity.</td><td><span class="no">No</span></td><td>DeclaredBusinessActivity, amountRaw</td><td>Transaction Logs; Business Activity and Operations</td></tr>
+<tr><td>IND02197</td><td>Detectable circular trade patterns in shipping and invoicing records.</td><td><span class="no">No</span></td><td>Invoice, Shipment</td><td>Customs and Border Records; Contractual and Invoice Data; Trade Documentation</td></tr>
+<tr><td>IND02198</td><td>Frequent establishment and dissolution of trading entities.</td><td><span class="no">No</span></td><td>EntityLifecycleEvent, LegalEntity</td><td>KYC &amp; Customer Due Diligence Records; Company &amp; Beneficial Ownership Registries</td></tr>
+<tr><td>IND02199</td><td>Documented shipments or services that appear in official records without logistics evidence.</td><td><span class="no">No</span></td><td>LogisticsEvidence, Shipment</td><td>Customs and Border Records; Trade Documentation</td></tr>
+</table>
+<table>
+<tr><th style="width:34%">IND02191 rule</th><th style="width:12%">Source</th><th>What it requires</th></tr>
+<tr><td><code>first_leg_starts_at_origin</code>, <code>last_leg_returns_to_origin</code>, <code>origin_named</code></td><td>Typology text</td><td>The first leg leaves the origin account and the last leg ends there.</td></tr>
+<tr><td><code>consecutive_legs_connect</code></td><td>Our reading</td><td>Each leg pays from the account the previous leg paid to.</td></tr>
+<tr><td><code>at_least_2_accounts</code></td><td>Our reading</td><td>More than one account is involved; a two-account round trip counts.</td></tr>
+<tr><td><code>legs_in_time_order</code></td><td>Added by us</td><td>The funds move forward in time (equal timestamps pass: minute resolution). A project decision, not in the typology.</td></tr>
+<tr><td><code>business_rationale_recorded</code></td><td>Typology text</td><td>Not decidable here; a warning only if a record claims a rationale.</td></tr>
+</table>
+
+<h3>4.7 The OBDA engine</h3>
+<p>Ontop 5.5.0 with DuckDB sits under layers 2 to 5. For one question it is given one mapping (the transfers, the profiles and the typology CSV files merged) and one ontology (layers 1 to 4 merged), and it does two things: <b>rewrites</b> a query by the ontology (an AML term becomes the data term under it) and <b>unfolds</b> it by the mapping into SQL. It must be given the ontology: without it, a query in AML terms returns no rows and no error, so a guard rejects any query that names a term the model should not use, and &ldquo;cannot check&rdquo; is decided from the declarations, never from an empty result.</p>
+
+<h2 class="page-break">5. How one question travels through the layers</h2>
+<div class="fig"><svg width="100%" viewBox="0 0 680 876" role="img" xmlns="http://www.w3.org/2000/svg" style="max-height:200mm">
+<title>Solution architecture with the files each component uses</title>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5f6670" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<style>
+ .t{font:14px Helvetica,Arial,sans-serif;fill:#2c2c2a}.th{font:500 14px Helvetica,Arial,sans-serif;fill:#2c2c2a}.ts{font:12px Helvetica,Arial,sans-serif;fill:#5f5e5a}
+ .gray rect{fill:#f1efe8;stroke:#5f5e5a}.pur rect{fill:#eeedfe;stroke:#534ab7}.teal rect{fill:#e1f5ee;stroke:#0f6e56}.amber rect{fill:#faeeda;stroke:#854f0b}
+ .pur .th,.pur .t{fill:#3c3489}.pur .ts{fill:#534ab7}.teal .th,.teal .t{fill:#085041}.teal .ts{fill:#0f6e56}.amber .th,.amber .t{fill:#633806}.amber .ts{fill:#854f0b}
+ .arr{stroke:#5f6670;stroke-width:1.2;fill:none}
+</style></defs>
+<g class="gray"><rect x="40" y="20" width="290" height="56" rx="8" stroke-width="0.7"/><text class="th" x="185.0" y="38" text-anchor="middle" dominant-baseline="central">Investigator question + tx ids</text><text class="ts" x="185.0" y="58" text-anchor="middle" dominant-baseline="central">app/streamlit_app.py</text></g>
+<g class="pur"><rect x="40" y="100" width="290" height="56" rx="8" stroke-width="0.7"/><text class="th" x="185.0" y="118" text-anchor="middle" dominant-baseline="central">Intent analysis (Qwen)</text><text class="ts" x="185.0" y="138" text-anchor="middle" dominant-baseline="central">src/intent.py, src/llm.py</text></g>
+<g class="pur"><rect x="40" y="180" width="290" height="56" rx="8" stroke-width="0.7"/><text class="th" x="185.0" y="198" text-anchor="middle" dominant-baseline="central">Intent SPARQL (Qwen)</text><text class="ts" x="185.0" y="218" text-anchor="middle" dominant-baseline="central">src/prompt.py, src/sparql_guard.py</text></g>
+<g class="teal"><rect x="40" y="260" width="290" height="270" rx="12" stroke-width="0.7"/><text class="th" x="185.0" y="278" text-anchor="middle" dominant-baseline="central">Ontop: one virtual graph</text><text class="ts" x="185.0" y="298" text-anchor="middle" dominant-baseline="central">src/unified.py, src/ontop_run.py</text></g>
+<g class="gray"><rect x="56" y="312" width="258" height="40" rx="8" stroke-width="0.7"/><text class="t" x="185.0" y="332.0" text-anchor="middle" dominant-baseline="central">Rewrite by ontology</text></g>
+<g class="gray"><rect x="56" y="366" width="258" height="40" rx="8" stroke-width="0.7"/><text class="t" x="185.0" y="386.0" text-anchor="middle" dominant-baseline="central">Unfold by mapping into SQL</text></g>
+<g class="amber"><rect x="56" y="424" width="258" height="56" rx="8" stroke-width="0.8"/><text class="th" x="185.0" y="442" text-anchor="middle" dominant-baseline="central">Source reasoning</text><text class="ts" x="185.0" y="462" text-anchor="middle" dominant-baseline="central">src/typology.py, src/sources.py</text></g>
+<line x1="185" y1="354" x2="185" y2="364" class="arr" marker-end="url(#arrow)"/>
+<g class="gray"><rect x="40" y="554" width="290" height="56" rx="8" stroke-width="0.7"/><text class="th" x="185.0" y="572" text-anchor="middle" dominant-baseline="central">DuckDB runs the SQL</text><text class="ts" x="185.0" y="592" text-anchor="middle" dominant-baseline="central">features.duckdb (read-only)</text></g>
+<g class="gray"><rect x="40" y="634" width="290" height="56" rx="8" stroke-width="0.7"/><text class="th" x="185.0" y="652" text-anchor="middle" dominant-baseline="central">Rows to candidate loop</text><text class="ts" x="185.0" y="672" text-anchor="middle" dominant-baseline="central">pivot.py, pipeline.py, loop_check.py</text></g>
+<g class="gray"><rect x="40" y="714" width="290" height="56" rx="8" stroke-width="0.7"/><text class="th" x="185.0" y="732" text-anchor="middle" dominant-baseline="central">SHACL + indicator verdicts</text><text class="ts" x="185.0" y="752" text-anchor="middle" dominant-baseline="central">src/indicators.py, loop_check.py</text></g>
+<g class="pur"><rect x="40" y="794" width="290" height="56" rx="8" stroke-width="0.7"/><text class="th" x="185.0" y="812" text-anchor="middle" dominant-baseline="central">Summary (Qwen, checked)</text><text class="ts" x="185.0" y="832" text-anchor="middle" dominant-baseline="central">src/summarize.py</text></g>
+<line x1="185" y1="78" x2="185" y2="98" class="arr" marker-end="url(#arrow)"/>
+<line x1="185" y1="158" x2="185" y2="178" class="arr" marker-end="url(#arrow)"/>
+<line x1="185" y1="238" x2="185" y2="258" class="arr" marker-end="url(#arrow)"/>
+<line x1="185" y1="532" x2="185" y2="552" class="arr" marker-end="url(#arrow)"/>
+<line x1="185" y1="612" x2="185" y2="632" class="arr" marker-end="url(#arrow)"/>
+<line x1="185" y1="692" x2="185" y2="712" class="arr" marker-end="url(#arrow)"/>
+<line x1="185" y1="772" x2="185" y2="792" class="arr" marker-end="url(#arrow)"/>
+<path d="M40 500 L22 500 L22 742 L38 742" fill="none" class="arr" stroke="#BA7517" marker-end="url(#arrow)"/>
+<g class="teal"><rect x="380" y="106" width="260" height="44" rx="8" stroke-width="0.7"/><text class="t" x="510.0" y="128.0" text-anchor="middle" dominant-baseline="central">Technique catalog (via Ontop)</text></g>
+<g class="gray"><rect x="380" y="190" width="260" height="44" rx="8" stroke-width="0.7"/><text class="t" x="510.0" y="212.0" text-anchor="middle" dominant-baseline="central">Guard: intent terms only</text></g>
+<g class="gray"><rect x="380" y="250" width="260" height="52" rx="8" stroke-width="0.7"/><text class="th" x="510.0" y="268" text-anchor="middle" dominant-baseline="central">1  External knowledge</text><text class="ts" x="510.0" y="288" text-anchor="middle" dominant-baseline="central">amlo.ttl, typology_adapter.ttl, CSV</text></g>
+<g class="teal"><rect x="380" y="306" width="260" height="52" rx="8" stroke-width="0.7"/><text class="th" x="510.0" y="324" text-anchor="middle" dominant-baseline="central">2  AML core ontology</text><text class="ts" x="510.0" y="344" text-anchor="middle" dominant-baseline="central">aml_core.ttl</text></g>
+<g class="teal"><rect x="380" y="362" width="260" height="52" rx="8" stroke-width="0.7"/><text class="th" x="510.0" y="380" text-anchor="middle" dominant-baseline="central">3  Typology requirements</text><text class="ts" x="510.0" y="400" text-anchor="middle" dominant-baseline="central">typology_requirements.ttl</text></g>
+<g class="teal"><rect x="380" y="418" width="260" height="52" rx="8" stroke-width="0.7"/><text class="th" x="510.0" y="436" text-anchor="middle" dominant-baseline="central">4  Data semantic + alignment</text><text class="ts" x="510.0" y="456" text-anchor="middle" dominant-baseline="central">source_vocabulary + alignment</text></g>
+<g class="teal"><rect x="380" y="474" width="260" height="52" rx="8" stroke-width="0.7"/><text class="th" x="510.0" y="492" text-anchor="middle" dominant-baseline="central">5  OBDA mapping</text><text class="ts" x="510.0" y="512" text-anchor="middle" dominant-baseline="central">r2rml (tx, customer), lens, config</text></g>
+<g class="gray"><rect x="380" y="714" width="260" height="52" rx="8" stroke-width="0.7"/><text class="th" x="510.0" y="732" text-anchor="middle" dominant-baseline="central">6  Validation</text><text class="ts" x="510.0" y="752" text-anchor="middle" dominant-baseline="central">t0039.shapes.ttl, indicators.json</text></g>
+<line x1="378" y1="276" x2="332" y2="276" class="arr" marker-end="url(#arrow)"/>
+<line x1="378" y1="332" x2="332" y2="332" class="arr" marker-end="url(#arrow)"/>
+<line x1="378" y1="388" x2="332" y2="388" class="arr" marker-end="url(#arrow)"/>
+<line x1="378" y1="444" x2="332" y2="444" class="arr" marker-end="url(#arrow)"/>
+<line x1="378" y1="500" x2="332" y2="500" class="arr" marker-end="url(#arrow)"/>
+<line x1="378" y1="740" x2="332" y2="740" class="arr" marker-end="url(#arrow)"/>
+<text class="ts" x="380" y="800">Purple: Qwen.  Teal: ours, draft.</text>
+<text class="ts" x="380" y="818">Gray: published, or code.</text>
+<text class="ts" x="380" y="836">Amber: source reasoning;</text>
+<text class="ts" x="380" y="854">the amber path feeds the verdicts.</text>
+</svg>
+<div class="cap">Figure 2. The pipeline on the left; the knowledge each step reads on the right, with the files. The model appears three times: intent, queries, summary.</div></div>
+<table>
+<tr><th style="width:4%">#</th><th style="width:18%">Step</th><th style="width:40%">What happens</th><th style="width:10%">Layers</th><th>Files</th></tr>
+<tr><td>1</td><td>Intent analysis (Qwen)</td><td>Chooses a technique from a catalogue read through Ontop, or asks, or offers candidates. Code checks the id exists and sits under the stated tactic.</td><td>1</td><td><code>src/intent.py</code></td></tr>
+<tr><td>2</td><td>Intent SPARQL (Qwen)</td><td>Writes two small queries naming only the technique and the transfer ids. A guard rejects any data term the model names itself.</td><td>1, 3</td><td><code>src/prompt.py</code>, <code>src/sparql_guard.py</code></td></tr>
+<tr><td>3</td><td>Rewrite (Ontop)</td><td>The query asks for what the technique&rsquo;s indicators need (layer 3); Ontop replaces each AML term (layer 2) by the data term under it (layer 4).</td><td>2, 3, 4</td><td><code>src/unified.py</code></td></tr>
+<tr><td>4</td><td>Unfold (Ontop)</td><td>The data terms become table and column references and then SQL; DuckDB runs it, read-only. For the example: 12 rows, about 15,000 characters of SQL.</td><td>5</td><td><code>src/ontop_run.py</code></td></tr>
+<tr><td>5</td><td>Source reasoning</td><td>Asks which data sources the technique lists, which terms each holds and which are covered; code reads the same chain and compares.</td><td>1, 3, 4, 5</td><td><code>src/typology.py</code>, <code>src/sources.py</code></td></tr>
+<tr><td>6</td><td>Candidate loop</td><td>Pivots the long-format rows to one row per transfer, orders by time, builds the candidate loop graph.</td><td>6</td><td><code>src/pivot.py</code>, <code>src/pipeline.py</code></td></tr>
+<tr><td>7</td><td>SHACL and verdicts</td><td>Runs the rules, gives each of the nine indicators a state, and names each gap by the data source that would hold it.</td><td>6 (3, 1)</td><td><code>src/loop_check.py</code>, <code>src/indicators.py</code></td></tr>
+<tr><td>8</td><td>Summary (Qwen)</td><td>Writes a short summary; code checks verdict words, places, numbers and business-rationale claims, with a template as fallback.</td><td>6</td><td><code>src/summarize.py</code></td></tr>
+</table>
+<p><b>Who decides what.</b> The model chooses a technique (checked against layer 1), writes queries that name no data term, and writes the summary (checked). Everything that depends on the data model or on the typology is decided by the layers: what an indicator needs (3), which columns hold it (4, 5), whether the pattern holds and what the verdict is (6). The model sees the question, the public typology catalogue and a nine-term vocabulary; transaction rows go only to Ontop, DuckDB, SHACL and code. The one exception is the summary step, which reads a short fact sheet with transfer ids, account ids, verdict states and the synthetic background; it can be switched off or fed pseudonymised ids, but as built it is not.</p>
+
+<h2>6. Keeping the layers consistent, and maintaining them</h2>
+<table>
+<tr><th style="width:32%">Check</th><th style="width:22%">Between</th><th>What it catches</th></tr>
+<tr><td>Every term an indicator needs is recorded in a source the typology lists for the technique</td><td>1 and 3</td><td>A need no source can supply.</td></tr>
+<tr><td>Every source named exists in the typology</td><td>1 and 3, 5</td><td>A mistyped or retired source id.</td></tr>
+<tr><td>Every AML term that has a data term under it is recorded in a source some table provides</td><td>3, 4 and 5</td><td>A bridge, or a mapping, that no longer agrees with the declared sources.</td></tr>
+<tr><td>What Ontop returns equals what code reads from the files (indicators, text, needs, missing terms, sources)</td><td>1 to 5</td><td>Drift between the typology data and our declarations.</td></tr>
+<tr><td>Queries through Ontop equal hand-written SQL on 26 gold cases</td><td>5 and the data</td><td>A wrong mapping or lens.</td></tr>
+<tr><td>Each file is in its layer directory; no code names a knowledge file by hand</td><td>All</td><td>Files drifting out of their layer.</td></tr>
+</table>
+<table>
+<tr><th style="width:26%">When&hellip;</th><th style="width:36%">Who changes what</th><th>Layers</th></tr>
+<tr><td>A new technique is added</td><td>The AML practitioner adds its terms, requirements and source statements, and rules and a registry entry if the indicators can be checked.</td><td>2, 3, 6</td></tr>
+<tr><td>The database changes</td><td>The data owner and engineering update the source vocabulary, the alignment, the mappings, the lens and the connection.</td><td>4, 5</td></tr>
+<tr><td>A typology release is published</td><td>Replace the CSV files, rebuild the generated mapping, and run the checks that compare indicator ids and text.</td><td>1</td></tr>
+<tr><td>A practitioner disagrees about what an indicator needs</td><td>One line changes in layer 3; no query, mapping or model changes.</td><td>3</td></tr>
+</table>
+<p>There are 14 hand-written files: the AMLO schema, the adapter, the four knowledge and alignment files, the two R2RML mappings, the lens, the registry and the shapes file, a small file that names the variables of the pivoted rows, and two Ontop connection files. Generated files are rebuilt on demand and not edited.</p>
+
+<h2>7. Where the implementation stands against the six layers</h2>
+<table>
+<tr><th style="width:18%">Layer</th><th style="width:38%">In place</th><th>Not yet</th></tr>
+<tr><td>1 External knowledge</td><td>AMLO, the AMLTRIX CSV files and a generated mapping; the technique catalogue.</td><td>FATF and AUSTRAC typologies.</td></tr>
+<tr><td>2 AML core ontology</td><td>18 terms, with the unanswerable ones declared.</td><td>Party, Company; Transaction against FundsTransfer; term hierarchy; stable namespace.</td></tr>
+<tr><td>3 Typology requirements</td><td>Needs, source statements and background for T0039; three consistency checks.</td><td>A &ldquo;why&rdquo; per requirement; typed evidence requirements; other techniques.</td></tr>
+<tr><td>4 Data semantic and alignment</td><td>Vocabulary of two tables; 7 axioms.</td><td>A second database; richer correspondences than subclass and subproperty.</td></tr>
+<tr><td>5 OBDA mapping</td><td>Two mappings, lens, connection, realised sources; verified against hand-written SQL.</td><td>A scaling test: the evidence query uses a variable predicate and produced about 15,000 characters of SQL for three transfers.</td></tr>
+<tr><td>6 Validation and execution</td><td>Nine rule checks, a nine-indicator registry, four verdict states, rule provenance tags, a run trace on the page.</td><td>A separate rules module; durable evidence and provenance records; rules for the other seven indicators.</td></tr>
+</table>
+<p><b>Across the layers:</b> review status is a comment in each file, not a machine-readable field; there is no access control, and one consuming application. None of this has been needed for the experiment, and all of it would be needed for production.</p>
+
+<h2>8. Verified, not done, and questions</h2>
+<h3>Verified (engineering checks)</h3>
+<ul>
+<li>Queries through Ontop return the same rows as hand-written SQL on all 26 gold cases; SHACL agrees with the gold verdicts on all 19 loop cases. The suite has 144 tests, including checks on the layer layout.</li>
+<li>What Ontop returns for the data sources, terms and tables equals what code reads from the files and declarations.</li>
+<li>The demo page gives the same result for the worked example in Gold mode and in intent mode with the real model, before and after the files were split into layers and moved.</li>
+</ul>
+<h3>Not done</h3>
+<ul>
+<li>No comparison between &ldquo;the model writes SQL directly&rdquo; and this pipeline, and no test across model sizes. The design is four conditions, gold SQL compared on returned id sets, &ldquo;silently wrong&rdquo; as the primary outcome, and Wilson intervals.</li>
+<li>No evaluation of intent accuracy at scale; candidate suggestions are known to be unstable.</li>
+<li>No expert review of layers 2 to 6 or of the gold cases. No technique other than T0039.</li>
+</ul>
+<h3>Questions for AML reviewers</h3>
+<ol>
+<li>Is our reading of what each indicator needs, and of which data source holds which term, sensible?</li>
+<li>Which concepts belong in the AML core ontology beyond the eighteen (Party, Company, &hellip;), and should Transaction be distinct from FundsTransfer?</li>
+<li>Is time ordering a defensible addition to the loop rule? Should a two-account round trip count as circular?</li>
+<li>Is there a conventional threshold for &ldquo;multiple hops&rdquo; (IND02195)?</li>
+<li>For which indicators is the absence of country a hard blocker, and for which could a proxy such as bank be acceptable?</li>
+<li>For a second technique, Money Mule Exploitation: how should fast in-and-out movement, &ldquo;similar amounts&rdquo; and account age be defined? The synthetic profiles have no account-opening date.</li>
+</ol>
+
+<h2>9. Attribution and licence</h2>
+<p>The typology content (techniques, indicators, data sources, mitigations) is derived from AMLTRIX 1.0-beta.4 by UAB Amlyze (https://framework.amltrix.com), used under the AMLTRIX License Terms. This work is not endorsed by AMLTRIX. Derivative works must keep this attribution and be distributed under the same terms. The ontologies, mappings, requirements, alignment and rules described here were written by this project and are not part of AMLTRIX.</p>
+<div class="foot">Components: Ontop 5.5.0, DuckDB, pyshacl 0.40.1, Qwen 3.5 9B (Ollama), Streamlit 1.50.0. Transaction data: derived from the IBM synthetic AML transaction set; customer profiles are synthetic and generated by this project.</div>
+</body></html>

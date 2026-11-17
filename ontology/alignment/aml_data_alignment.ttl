@@ -1,0 +1,19 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix fcd:  <https://example.org/fincrime-data#> .
+@prefix amd:  <https://example.org/aml-data#> .
+
+# MODULE 4b of the semantic layer: the semantic alignment of the source vocabulary (module 4a) to the AML core ontology (module 2).
+# "fcd:x rdfs:subClassOf / rdfs:subPropertyOf amd:y" says the data term x is a kind of AML term y. Ontop reads these when it is given the ontology
+# (-t), so a query that asks for amd:y is rewritten to the data term and then to SQL by the mapping (module 5). Only subclass and subproperty are
+# used (with domain and range in the AML core ontology): they are what Ontop can rewrite (OWL 2 QL).
+# An AML term with no line here has NO alignment: the data cannot answer it, and that is how "cannot check" is decided.
+# Specific to this database: it changes when the database changes, while the AML terms it points up to do not.
+# Split on 2026-11-10 from mapping/data_layer.ttl. DRAFT by Claude, 2026-11-09. Not reviewed by the user or a domain expert.
+
+fcd:Transaction rdfs:subClassOf amd:FundsTransfer .
+fcd:Account rdfs:subClassOf amd:Account .
+fcd:txId rdfs:subPropertyOf amd:transferId .
+fcd:timestamp rdfs:subPropertyOf amd:transferTime .
+fcd:fromAccount rdfs:subPropertyOf amd:originator .
+fcd:toAccount rdfs:subPropertyOf amd:beneficiary .
+fcd:sameBank rdfs:subPropertyOf amd:sameInstitution .

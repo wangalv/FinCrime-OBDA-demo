@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 import indicators  # noqa: E402
 import loop_check  # noqa: E402
+import paths  # noqa: E402
 
 CASES = json.loads((ROOT / "gold" / "cases.json").read_text())["cases"]
 SAME_BANK = json.loads((ROOT / "tests" / "fixtures" / "same_bank.json").read_text())
@@ -28,21 +29,27 @@ def leg(i, f, t, minute, bank=False):
 
 class RegistryAndShapes(unittest.TestCase):
     def test_every_shape_rule_is_in_the_registry_and_back(self):
-        in_shapes = set(re.findall(r'sh:message\s+"\[(\w+)\]', (ROOT / "shapes" / "t0039.shapes.ttl").read_text()))
+        in_shapes = set(re.findall(r'sh:message\s+"\[(\w+)\]', paths.SHAPES.read_text()))
         in_registry = {r for i in REG["indicators"] for r in i["rules"]}
         # rules that belong to the leg and candidate scaffolding, not to an indicator
         scaffolding = {"leg_complete"}
         self.assertEqual(in_shapes - scaffolding, in_registry)
 
+    def test_every_rule_has_a_source_and_a_text(self):
+        for i in REG["indicators"]:
+            for r in i["rules"]:
+                self.assertIn(r, REG["rule_info"], r)
+                self.assertIn(REG["rule_info"][r]["source"], REG["rule_source_legend"], r)
+
     def test_computed_answerability_matches_the_m0_marks(self):
-        terms = indicators.ontology_terms()
+        terms = indicators.available_terms()
         for ind in REG["indicators"]:
             ans, _ = indicators.answerability(ind, terms)
             self.assertEqual(ans, indicators.M0_TO_ANSWERABILITY[ind["m0_mark"]], ind["id"])
 
     def test_nine_indicators_and_a_skeleton_for_each_unanswerable_one(self):
         self.assertEqual(len(REG["indicators"]), 9)
-        text = (ROOT / "shapes" / "t0039.skeletons.ttl").read_text()
+        text = paths.SKELETONS.read_text()
         for ind in REG["indicators"]:
             if ind["m0_mark"] == "no":
                 self.assertIn("ex:implementsIndicator amx:" + ind["id"], text)

@@ -1,0 +1,42 @@
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix amd:   <https://example.org/aml-data#> .
+
+# MODULE 2 of the semantic layer: the AML core ontology. The AML vocabulary (amd:) the indicators talk about: funds transfer, account, originator,
+# beneficiary, transfer time, and the concepts this data cannot supply (jurisdiction, invoice, shipment, legal entity, ...).
+# It names no database and no typology: which indicator needs which term is module 3, which data term answers a term is module 4.
+# Split on 2026-11-10 from mapping/aml_layer.ttl (which had been merged on the same day from aml_data_vocab.ttl and typology_needs.ttl).
+# DRAFT by Claude (2026-11-09). Not reviewed by the user or a domain expert. The typology does not define these concepts (it has tactics,
+# techniques, indicators and data sources, not "the paying account of a transfer"): they are OUR reading of what the indicator texts talk about.
+# Namespace is a placeholder. The typology data, AMLO and vendor/ are not touched.
+# Read by: src/data_ontology.py (the terms), src/indicators.py (which terms exist).
+# An AML term with no line in ontology/alignment/aml_data_alignment.ttl is one the data cannot answer ("cannot check").
+
+# ---- AML terms the data can speak about (they have a line in ontology/alignment/aml_data_alignment.ttl)
+amd:FundsTransfer a owl:Class ; rdfs:comment "A transfer of funds from one account to another." .
+amd:Account a owl:Class ; rdfs:comment "An account that takes part in a transfer." .
+
+amd:transferId a owl:DatatypeProperty ; rdfs:domain amd:FundsTransfer ; rdfs:range xsd:integer ;
+    rdfs:comment "Identifier of the transfer." .
+amd:transferTime a owl:DatatypeProperty ; rdfs:domain amd:FundsTransfer ; rdfs:range xsd:dateTime ;
+    rdfs:comment "When the transfer happened." .
+amd:originator a owl:ObjectProperty ; rdfs:domain amd:FundsTransfer ; rdfs:range amd:Account ;
+    rdfs:comment "The account the funds leave (the paying account)." .
+amd:beneficiary a owl:ObjectProperty ; rdfs:domain amd:FundsTransfer ; rdfs:range amd:Account ;
+    rdfs:comment "The account the funds arrive at (the receiving account)." .
+amd:sameInstitution a owl:DatatypeProperty ; rdfs:domain amd:FundsTransfer ; rdfs:range xsd:boolean ;
+    rdfs:comment "True when both accounts are at the same bank; false means between banks. Between banks is not cross-border: the data has no country." .
+
+# ---- AML terms the indicators talk about that this data cannot speak about: declared, with NO bridge
+amd:Jurisdiction a owl:Class ; rdfs:comment "The country or legal territory a transfer or an entity belongs to. The data has no country." .
+amd:CompanyGroup a owl:Class ; rdfs:comment "A group of companies under common control." .
+amd:SupportingDocument a owl:Class ; rdfs:comment "A document that supports a transfer or a claim." .
+amd:Invoice a owl:Class ; rdfs:comment "An invoice." .
+amd:Shipment a owl:Class ; rdfs:comment "A shipment of goods." .
+amd:LegalEntity a owl:Class ; rdfs:comment "A legal entity." .
+amd:BeneficialOwnerChange a owl:Class ; rdfs:comment "A change of beneficial owner of an entity." .
+amd:DeclaredBusinessActivity a owl:Class ; rdfs:comment "The business activity an entity declares." .
+amd:amountRaw a owl:DatatypeProperty ; rdfs:comment "The raw amount of a transfer. The data has only a logarithm of it." .
+amd:LogisticsEvidence a owl:Class ; rdfs:comment "Evidence that goods or services were delivered." .
+amd:EntityLifecycleEvent a owl:Class ; rdfs:comment "The founding, change or dissolution of an entity." .
