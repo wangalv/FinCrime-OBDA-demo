@@ -12,34 +12,34 @@ The repository also contains a copy of the earlier **aml-ontology** project (the
 
 ```
 question ──► ids ──► intent ──► typology ──► query plan ──► SPARQL ──► guard
- (investigator) (code)  (LLM)    (Ontop)       (code)        (LLM)     (code)
+ (investigator) (Python) (LLM)    (Ontop)       (Python)      (LLM)    (Python)
                                                                           │
  summary ◄── verdicts ◄── SHACL ◄── candidate ◄── rows ◄── SQL ◄── Ontop ◄┘
-  (LLM)       (code)      (code)     (code)        (DB)   (Ontop) (ontology + R2RML)
+  (LLM)      (Python)   (pyshacl)   (Python)      (DB)   (Ontop) (ontology + R2RML)
 ```
 
 | # | Step | Who | What happens |
 |---|---|---|---|
 | 1 | Ask | Investigator | Describes the suspicious pattern in their own words and gives the flagged transaction ids. |
-| 2 | Find the ids | Code | Pulls the transaction ids out of the question. No ids, no run. |
+| 2 | Find the ids | Python (`demo_run.py`) | Pulls the transaction ids out of the question. No ids, no run. |
 | 3 | **Intent** | **LLM** | picks one technique from the AML typology's technique list (here, T0039). |
-| 4 | Check the intent | Code | The chosen id must be in the list and under the tactic the model named. A technique the demo cannot check is named and declined. |
-| 5 | Read the typology | Ontop | A SPARQL query over the typology data gives the technique's indicators, their text, what each one needs, and which needed terms the data lacks. |
-| 6 | Plan the queries | Code | From the requirements, the AML terms and the bridge, decides which queries to run and which terms each one fetches. Terms with no data behind them are listed as missing, not queried. |
+| 4 | Check the intent | Python (`intent.py`) | The chosen id must be in the list and under the tactic the model named. A technique the demo cannot check is named and declined. |
+| 5 | Read the typology | Ontop (Java) | A SPARQL query over the typology data gives the technique's indicators, their text, what each one needs, and which needed terms the data lacks. |
+| 6 | Plan the queries | Python (`queryplan.py`) | From the requirements, the AML terms and the bridge, decides which queries to run and which terms each one fetches. Terms with no data behind them are listed as missing, not queried. |
 | 7 | **Write SPARQL** | **LLM** | writes the queries in one call. It sees only a list of AML terms and a task description, not the data, the mapping or the SQL. |
-| 8 | Guard the SPARQL | Code | Checks syntax, read-only `SELECT`, unknown terms (Ontop returns zero rows for a term it does not know, instead of failing), the output variables, and that the ids match the question. |
-| 9 | **Rewrite** | **Ontop** | Loads the ontology and the R2RML mapping, expands the mapping with the ontology (a data term that sits under an AML term answers it), unfolds the SPARQL through the mapping, optimises, and produces the **SQL**. |
-| 10 | Run the SQL | Ontop, DuckDB | Read-only, on `tx_features` and `kyc_profiles`. |
-| 11 | Assemble | Code | Puts the returned payments in time order and builds the candidate chain, with account background. |
-| 12 | **SHACL** | pyshacl | Checks the structure against the rules in `validation/shapes/t0039.shapes.ttl`. |
-| 13 | Verdicts | Code | For each indicator: held, not held, facts only, or cannot check. |
+| 8 | Guard the SPARQL | Python (`sparql_guard.py`) | Checks syntax, read-only `SELECT`, unknown terms (Ontop returns zero rows for a term it does not know, instead of failing), the output variables, and that the ids match the question. |
+| 9 | **Rewrite** | **Ontop (Java)** | Loads the ontology and the R2RML mapping, expands the mapping with the ontology (a data term that sits under an AML term answers it), unfolds the SPARQL through the mapping, optimises, and produces the **SQL**. |
+| 10 | Run the SQL | Ontop (Java), DuckDB | Read-only, on `tx_features` and `kyc_profiles`. |
+| 11 | Assemble | Python (`pipeline.py`, `loop_check.py`) | Reads the returned rows and puts the payments into one candidate graph, in whatever order they came. No sorting and no origin: that is left to SHACL. Account background is kept alongside. |
+| 12 | **SHACL** | pyshacl (Python library), called from `loop_check.py` | Rules in `validation/shapes/t0039.shapes.ttl` first derive the time order from the timestamps (earlier, next, position; ties by transaction id), then check the structure: each payment starts where the previous one went, and the last returns to where the first started. |
+| 13 | Verdicts | Python (`indicators.py`) | For each indicator: held, not held, facts only, or cannot check. |
 | 14 | Summary | LLM | Rewrites code-built facts into five plain-language parts. An optional rule check ("Checked by code") rejects a report that uses verdict words, technical words, unknown places or numbers, or contradicts SHACL; a rejected report is replaced by a fixed template. |
 
 ### Who does what
 
 - **The model** does three things: reads the question to pick the technique (step 3), writes the SPARQL (step 7), and phrases the summary (step 14).
 - **Ontop (OBDA)** turns SPARQL into SQL and runs it (steps 5, 9, 10). It reads the ontology and mapping when it starts, then answers each query from the expanded mapping. It does not load the data into a graph.
-- **Code and SHACL** do everything else, including all verdicts. Plain Python in `src/`; the SHACL rules are data in `validation/`.
+- **Python and SHACL** do everything else, including all verdicts. The Python is in `src/` (plain functions, no model involved); the SHACL rules are data in `validation/`, run by the pyshacl library.
 
 ### What the page shows
 
@@ -157,7 +157,7 @@ The money goes 812D22980 → 811C597B0 → 811B83280 → back to 812D22980.
 
 | Indicator | Result |
 |---|---|
-| IND02191 Cyclical pattern | **Held**: first payment starts at the origin, each payment starts where the previous one went, the last returns to the origin, more than one account is involved |
+| IND02191 Cyclical pattern | **Held**: each payment starts where the previous one went, the last returns to where the first started, more than one account is involved |
 | IND02195 Convoluted routing | Facts only: 3 payments, all between different banks. The typology gives no number for "multiple hops", so there is no verdict |
 | IND02192, 02193, 02194, 02196, 02197, 02198, 02199 | Cannot check: they need company groups, invoices, shipments, legal-entity records, declared activity or exact amounts, none of which the data holds |
 
