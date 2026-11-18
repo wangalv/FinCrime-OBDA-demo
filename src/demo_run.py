@@ -5,7 +5,7 @@ each slow stage (the model writing, Ontop running), so a page can show the chain
 a sentence for the chat log and the view the page should bring forward. run(...) consumes it and returns the final trace.
 
 run(question, mode, ...) -> trace dict:
-  question, ids, mode ('model' = Qwen writes the SPARQL, 'gold' = the gold SPARQL stands in)
+  question, ids, mode ('model' = the LLM writes the SPARQL, 'gold' = the gold SPARQL stands in)
   plan: the queries the Alignment asks for (src/queryplan.py), one per entity: transaction (evidence for the indicators) and account (background)
   roles[key] = {label, serves, vars, required, sparql, guard (list), reply, llm_seconds, sql, ontop_seconds, rows (CSV dicts), error}
   (one model call writes all the queries: reply and llm_seconds are the same for each; t['llm_seconds'] is that call)

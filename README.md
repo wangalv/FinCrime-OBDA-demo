@@ -82,6 +82,7 @@ data/, vendor/  the AML typology as RDF, and its unmodified CSV export with lice
 docs/           design documents and the T0039 walkthrough
 tools/          Ontop, JDK and the DuckDB driver (git-ignored, not in the repository)
 PLAN.md         design, experiment conditions, milestones
+SETUP.md        how to get the demo running (LLM, Ontop, database)
 ```
 
 `scripts/`, `shapes/`, `site/`, `jsonld/`, `rdfxml/` and `demo/` belong to the earlier work (see the end of this file); `demo/` has its own older scenarios, mappings and tests. `ontology/amlo.ttl`, `data/` and `vendor/` also come from it, but the experiment reads them as layer 1.
@@ -101,7 +102,7 @@ PLAN.md         design, experiment conditions, milestones
 | `indicators.py` | 13 | Gives each indicator its answer: held, not held, facts only, or cannot check. |
 | `summarize.py` | 14 | Builds the facts, asks the model to phrase them in five parts, and runs the optional rule check. |
 | `baseline.py` | | The "Without ontology" side: the model sees only the table rows. |
-| `llm.py` | | A small client for a local Ollama model; no keys. |
+| `llm.py` | | A small client for any LLM with an OpenAI-compatible chat API. It reads the key and model from `.env`; no key is in the code. |
 | `flow_view.py`, `graph_view.py` | | The flow diagram and the graph the page draws while a question runs. |
 | `paths.py` | | The one place that says where every knowledge, mapping and validation file lives. |
 
@@ -172,23 +173,23 @@ The report never says the activity is suspicious or money laundering: the system
 
 ## Run it
 
-Requirements, none of which are in this repository:
+Full steps are in **[SETUP.md](SETUP.md)**. In short, you need:
 
-- Python 3.9 with `pip install -r requirements.txt`.
-- Any LLMs. **Ollama** with `qwen3.5:9b` was used in this demo. 
-- **Ontop 5.5.0**, a JDK 21 and the DuckDB JDBC driver, placed under `tools/` (`tools/ontop.sh` runs them; they are git-ignored).
-- The transaction database `features.duckdb` (tables `tx_features` and `kyc_profiles`), expected at `../AML Triage Demo/data/features.duckdb`. It is built from the IBM AML sample; the KYC table is synthetic. The path is set in `config/ontop/ontop-duckdb.properties`.
+- Python 3.9 and `pip install -r requirements.txt`.
+- **Any LLM with an OpenAI-compatible chat API.** Copy `.env.example` to `.env` and set `LLM_API_KEY`, `LLM_BASE_URL` and `LLM_MODEL`. Nothing is installed locally.
+- **Ontop 5.5.0**, a JDK 21 and the DuckDB JDBC driver, placed under `tools/` (git-ignored).
+- The transaction database `features.duckdb` (tables `tx_features` and `kyc_profiles`). It is built from the IBM AML sample, the KYC table is synthetic, and **it is not in this repository** yet; see [SETUP.md](SETUP.md#4-the-database).
 
 ```
 .venv/bin/streamlit run app/streamlit_app.py
 ```
 
-Then open <http://localhost:8501>. Restart the page after changing anything in `src/`.
+Then open <http://localhost:8501>. Restart the page after changing `.env` or anything in `src/`.
 
 Tests (several call Ontop and the database, so they need the setup above):
 
 ```
-.venv/bin/python -m unittest discover tests
+.venv/bin/python -m unittest discover -s tests -t .
 ```
 
 ## What is not done

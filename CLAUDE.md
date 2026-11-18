@@ -94,6 +94,8 @@ Ontop 能同时读 AMLO（TBox）和 AMLTRIX（内容）并做推理。两条路
 
 **“Checked by code” 默认改为关着（2026-11-17，用户要求）**：`app/streamlit_app.py` 里 `value=False`。所以默认情况下 Qwen 的总结原样显示，规则只在后台跑，它本会拦下的内容放在警告和聊天里的斜体句子里；勾上才强制（不过关换模板）。上一段里“勾上（默认）”按此读。
 
+**去掉本地模型依赖，改成直接调 LLM API（2026-11-18，用户要求：项目可用任何 LLM，不要求装 Ollama）**：`src/llm.py` 重写，调用任何 OpenAI 兼容的 `<LLM_BASE_URL>/chat/completions`；配置来自环境变量或仓库根的 `.env`（已 git 忽略；模板 `.env.example`，新增）：`LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`，可选 `LLM_EXTRA_BODY`（JSON，合并进每次请求，例如关闭 thinking）、`LLM_JSON_MODE=off`；也读旧名 `Z_AI_API_KEY/BASE_URL/CHAT_MODEL`（`demo/.env` 里的 z.ai 设置因此仍然有效，页面现在默认就用它：`glm-5.3-flash`）。`chat(system, user, model, temperature, seed)` 的返回仍是 `(text, seconds)`，`num_ctx` 收下但忽略；服务端拒绝 `response_format` 时自动去掉重试；回复外面的代码围栏会剥掉；错误是 `LLMError`，信息里不含 key。`llm.missing()` 列出没配的项，页面侧栏会警告。页面和模块里的 “Qwen/Ollama” 字样改成 “LLM/the model”（流程图那一行现在叫 “LLM”）；**提示版本没变，所以以前 Qwen 的数字和现在换模型后的数字不能混着比**。测试 `tests.test_llm`（15 项，本机假服务器，不联网）；`tests/test_baseline.py` 补了 `sys.path`（以前单独跑会找不到模块）；全套 183 项通过。**真 API 试过**：z.ai 一次小调用 2.8 秒；T0039 示例整条链：第一次意图步骤返回 “choose”（让调查员在几个候选里选），第二次直接选对 T0039（温度 0.3，意图不稳定；提示 i3 是为 Qwen 调的）；带 pick=T0039 跑完整条链：两条 SPARQL 都过检查各返回 3 行，IND02191 成立，总结由模型写、规则没有标出问题，68.5 秒。**没做**：别的 provider 没试；Anthropic 原生接口没做（只有 OpenAI 兼容格式）；`baseline.py` 里 AML Triage 的数据库和 Python 路径仍写死，数据库不在仓库里（`SETUP.md` 如实写了）。新增 `SETUP.md`（部署步骤，不再提 Ollama）；README 的 “Run it” 缩成要点并指向它。**还没提交也没推送**。
+
 ## 本体层（旧部分）要点
 - 文件：`ontology/amlo.ttl`（手写 schema）、`scripts/build_abox.py`（CSV 转换）、`shapes/amlo-shapes.ttl`、`scripts/validate.py`、`scripts/run_queries.py`、`vendor/amltrix/`（原始数据，**不要改**）。
 - AMLTRIX 没有独立的 typology 表；Technique/Sub-technique 就是 typology 层。Technique 等是个体不是 OWL 子类，层级用 `skos:broader`。

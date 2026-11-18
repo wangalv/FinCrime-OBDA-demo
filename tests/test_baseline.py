@@ -1,9 +1,12 @@
 """The 'Without OBDA' comparison: rows read by code, the model sees only the table, nothing from the OBDA side."""
 import json
+import sys
 import unittest
+from pathlib import Path
 
-import baseline
-import llm
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+import baseline  # noqa: E402
+import llm  # noqa: E402
 
 
 def fake_rows(ids):

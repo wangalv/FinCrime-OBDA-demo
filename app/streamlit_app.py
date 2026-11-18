@@ -2,7 +2,7 @@
 
 Run from the repo root:   .venv/bin/streamlit run app/streamlit_app.py
 Left: the investigator's chat. Right: what happened behind it: OBDA (ontology, R2RML mapping, SHACL check), then the SPARQL, SQL and rows,
-then the summary. It needs Ontop (tools/) and the database; the model path also needs Ollama with qwen3.5:9b.
+then the summary. It needs Ontop (tools/) and the database; the model path also needs an LLM API (see .env.example).
 """
 import json
 import re
@@ -217,7 +217,7 @@ def save_failed_run(trace, question, mode, model, temperature):
 
 
 def render_baseline(b):
-    """What Qwen said when it was given only the table rows (the 'Without ontology' panel): a yes / no and the same five parts as the other side."""
+    """What the model said when it was given only the table rows (the 'Without ontology' panel): a yes / no and the same five parts as the other side."""
     if b["error"]:
         st.warning(b["error"])
         return
@@ -227,7 +227,7 @@ def render_baseline(b):
     st.markdown(f"**Does it fit? {mark_}**")
     st.markdown(b["explanation"] or b["reply"] or "")
     miss = f" Ids not in the table: {b['missing_ids']}." if b["missing_ids"] else ""
-    st.caption(f"Qwen saw only {len(b['rows'])} rows of the transaction table ({len(b['columns'])} fields), no typology, rules or customer profiles.{miss} "
+    st.caption(f"The model saw only {len(b['rows'])} rows of the transaction table ({len(b['columns'])} fields), no typology, rules or customer profiles.{miss} "
                f"{b['model']}, {b['seconds']} s, prompt {b['prompt_version']}. One run, not a measurement.")
 
 
@@ -391,15 +391,17 @@ st.session_state.setdefault("tid", 0)
 # ------------------------------------------------------------------ sidebar
 with st.sidebar:
     st.title("AML OBDA Demo")
-    st.caption("T0039 Circular Transactions. A small local model writes SPARQL over ontology terms; Ontop turns it into SQL; "
-               "SHACL checks the structure of what comes back. Every question also goes to Qwen on its own, given only the table rows (no OBDA), for comparison.")
-    mode = "model"          # Qwen writes the SPARQL (the intent-only and gold modes are still in demo_run, but the page no longer offers them)
-    model = st.text_input("Model (Ollama)", llm.DEFAULT_MODEL, disabled=(mode == "gold"))
+    st.caption("T0039 Circular Transactions. An LLM writes SPARQL over ontology terms; Ontop turns it into SQL; "
+               "SHACL checks the structure of what comes back. Every question also goes to the model on its own, given only the table rows (no OBDA), for comparison.")
+    mode = "model"          # the model writes the SPARQL (the intent-only and gold modes are still in demo_run, but the page no longer offers them)
+    model = st.text_input("Model", llm.DEFAULT_MODEL, disabled=(mode == "gold"), help="The model name your LLM provider uses. Set LLM_API_KEY, LLM_BASE_URL and LLM_MODEL in .env (see .env.example).")
+    if llm.missing():
+        st.warning("No LLM is configured yet: set " + ", ".join(llm.missing()) + " in `.env` (see `.env.example`) and restart the page.")
     temperature = st.slider("Temperature", 0.0, 1.0, 0.3, 0.1, disabled=(mode == "gold"))
     enforce = st.checkbox("Checked by code", value=False, disabled=(mode == "gold"),
-                          help="On: Qwen writes the summary and code checks it against the rules (verdict words, technical words, places, stray numbers, "
+                          help="On: the model writes the summary and code checks it against the rules (verdict words, technical words, places, stray numbers, "
                                "business-rationale claims); a summary that breaks a rule is replaced by a fixed template. "
-                               "Off: Qwen's summary is shown as it is.")
+                               "Off: the model's summary is shown as it is.")
     summary = "model" if mode != "gold" else "template"
     pause = st.slider("Pause between steps (s)", 0.0, 2.0, 0.5, 0.1, help="Slows the quick steps down so each one can be seen.")
     st.divider()
@@ -420,7 +422,7 @@ with left:
     pw, po = st.columns(2, gap="small")
     pw.markdown("##### Without ontology")                     # the headings sit above the boxes; the right column gets an invisible one so the tops stay level
     po.markdown("##### With ontology")
-    chat_w = pw.container(height=H_CHAT, border=True)         # Qwen alone, given only the table rows
+    chat_w = pw.container(height=H_CHAT, border=True)         # the model alone, given only the table rows
     chat_o = po.container(height=H_CHAT, border=True)         # the whole chain: typology, ontology, mapping, rules
     typed = st.chat_input("Describe the suspicious pattern and give the flagged transaction ids")
 right.markdown("##### &nbsp;")
@@ -501,7 +503,7 @@ if question:
             paused += pause
     chain_secs = round(time.perf_counter() - t_chain - paused, 1)
     st.session_state.trace = trace
-    base = None             # "Without ontology": after the chain, Qwen on its own reads the table rows (its lane in the flow diagram lights for this call)
+    base = None             # "Without ontology": after the chain, the model on its own reads the table rows (its lane in the flow diagram lights for this call)
     if trace["ids"] and trace["status"] not in ("clarify", "choose", "unsupported", "intent_rejected", "intent_error", "no_ids"):
         status_w.update(label=f"{model} is reading the table rows on its own...", state="running", expanded=True)
         st.session_state.baseline_state = "active"

@@ -12,7 +12,7 @@ What the diagram says, and does not say:
     is given the merged data ontology as -t, so a query in AML terms is rewritten to the data terms), but not AMLO: the AML framework ontology
     does not shape the SQL. The Ontop box therefore lights twice, and each layer lights only in the run that reads it.
   - The AML terms (L2) are also what the model writes against (prompt vocabulary) and what the SPARQL checks use; the requirements (L3) decide what the plan asks for.
-Below them, when the "Without OBDA" switch is on, a second lane: Question -> Qwen -> Answer, the comparison where the model is given only the table
+Below them, when the "Without OBDA" switch is on, a second lane: Question -> LLM -> Answer, the comparison where the model is given only the table
 rows (src/baseline.py). It is separate from the chain above: it lights only while that one call runs. lane = None (no lane), 'waiting', 'active',
 'done' or 'fail'.
 States of a box: idle (grey), active (the step the chain is at; gold, pulses), done (green), fail (red). A layer box stays grey; when read it is outlined in the text colour and filled darker.
@@ -23,7 +23,7 @@ import html
 
 W, H = 1000, 172
 LANE_H = 84                                          # extra height of the "Without OBDA" lane
-LANE_NODES = [("lq", "Question", "same question"), ("lm", "Qwen", "reads the table rows"), ("la", "Answer", "yes / no, no checks")]
+LANE_NODES = [("lq", "Question", "same question"), ("lm", "LLM", "reads the table rows"), ("la", "Answer", "yes / no, no checks")]
 BOX_W, BOX_H, GAP, Y = 140, 44, 24, 12
 
 # id, label, sub label
@@ -41,7 +41,7 @@ TAIL = ("shacl", "result")                          # strictly one after the oth
 STAGE_NODE = {"intent": "sparql", "ids": "question", "typology": "ontop", "sparql": "sparql", "guard": "sparql", "ontop": "ontop", "db": "sql",
               "candidate": "shacl", "shacl": "shacl", "answer": "result"}
 FAIL_AT = {"no_ids": "question", "clarify": "sparql", "choose": "sparql", "unsupported": "sparql", "intent_rejected": "sparql", "intent_error": "sparql", "model_error": "sparql", "rejected_by_guard": "sparql", "ontop_error": "ontop", "rejected_later": "shacl"}
-SUB = {"sparql": {"model": "Qwen", "intent": "Qwen, intent only", "gold": "gold, no model"}}
+SUB = {"sparql": {"model": "LLM", "intent": "LLM, intent only", "gold": "gold, no model"}}
 # The six layers (see the architecture figure): id, tag, title, what it holds here, colour, the boxes that read it. A layer is read by a box in the
 # run that needs it: L1 and L3 when Ontop reads the AML typology and the requirements (in the intent mode also in the SQL run: one graph), L2
 # by the model's vocabulary and by the SQL run, L4 and L5 by the SQL run, L6 by SHACL.
@@ -211,7 +211,7 @@ def render(trace, stage, new=None, mode=None, lane=None):
         y0 = H + 14
         parts.append(f'<line class="sep" x1="8" y1="{y0 - 8}" x2="{W - 8}" y2="{y0 - 8}"/>'
                      f'<text class="lanet" x="8" y="{y0 + 8}">WITHOUT OBDA</text>'
-                     f'<text class="lanes" x="112" y="{y0 + 8}">Qwen is given the table rows and decides on its own: no ontology, mapping, typology text or SHACL</text>')
+                     f'<text class="lanes" x="112" y="{y0 + 8}">The LLM is given the table rows and decides on its own: no ontology, mapping, typology text or SHACL</text>')
         for i, (nid, label, sub) in enumerate(LANE_NODES):
             x, y = pos(i), y0 + 16
             if i:

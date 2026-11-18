@@ -1,4 +1,4 @@
-"""The comparison for the "Without OBDA" switch: Qwen gets the transaction table rows and decides for itself.
+"""The comparison for the "Without OBDA" switch: the model gets the transaction table rows and decides for itself.
 
 No ontology, no mapping, no typology text, no SHACL. The rows of the flagged transactions are read with a plain SELECT by id (code, not
 the model; no Ontop), shown to the model as a CSV, and the model is asked the investigator's own question. What it says is shown next to

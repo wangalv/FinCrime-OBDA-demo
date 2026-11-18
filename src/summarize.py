@@ -8,7 +8,7 @@ The wording is business wording: no ontology, mapping, query, SQL, SHACL, table 
 
 facts(ans, names)    -> plain-text facts the report may rest on (the ONLY basis; nothing else may be claimed), built by code from the whole run
 template(ans)        -> the same five parts written by code, used as the fallback and as the option without a model
-llm_summary(ans, ..) -> (text, source, problems, seconds): Qwen writes the five parts from the facts; code checks it; if the check fails the template is used.
+llm_summary(ans, ..) -> (text, source, problems, seconds): the LLM writes the five parts from the facts; code checks it; if the check fails the template is used.
 text is markdown: each part has a bold heading.
 Checks: no verdict words (laundering, suspicious, illicit, guilty, ...), no technical words, no claim about places the facts never mention
 (claims.unstated_place), no transaction id, account id or number that is not in the facts, all five parts present, and a statement of IND02191 that
