@@ -13,9 +13,9 @@ The repository also contains a copy of the earlier **aml-ontology** project (the
 ```
 question ──► ids ──► intent ──► typology ──► query plan ──► SPARQL ──► guard
  (investigator) (Python) (LLM)    (Ontop)       (Python)      (LLM)    (Python)
-                                                                          │
- summary ◄── verdicts ◄── SHACL ◄── candidate ◄── rows ◄── SQL ◄── Ontop ◄┘
-  (LLM)      (Python)   (pyshacl)   (Python)      (DB)   (Ontop) (ontology + R2RML)
+                                                                         │
+ summary ◄── verdicts ◄── SHACL ◄── rows ◄── SQL ◄── Ontop ◄─────────────┘
+  (LLM)      (Python)   (pyshacl)   (DB)   (Ontop) (ontology + R2RML)
 ```
 
 | # | Step | Who | What happens |
@@ -30,14 +30,13 @@ question ──► ids ──► intent ──► typology ──► query plan 
 | 8 | Guard the SPARQL | Python (`sparql_guard.py`) | Checks syntax, read-only `SELECT`, unknown terms (Ontop returns zero rows for a term it does not know, instead of failing), the output variables, and that the ids match the question. |
 | 9 | **Rewrite** | **Ontop (Java)** | Loads the ontology and the R2RML mapping, expands the mapping with the ontology (a data term that sits under an AML term answers it), unfolds the SPARQL through the mapping, optimises, and produces the **SQL**. |
 | 10 | Run the SQL | Ontop (Java), DuckDB | Read-only, on `tx_features` and `kyc_profiles`. |
-| 11 | Assemble | Python (`pipeline.py`, `loop_check.py`) | Reads the returned rows and puts the payments into one candidate graph, in whatever order they came. No sorting and no origin: that is left to SHACL. Account background is kept alongside. |
-| 12 | **SHACL** | pyshacl (Python library), called from `loop_check.py` | Rules in `validation/shapes/t0039.shapes.ttl` first derive the time order from the timestamps (earlier, next, position; ties by transaction id), then check the structure: each payment starts where the previous one went, and the last returns to where the first started. |
-| 13 | Verdicts | Python (`indicators.py`) | For each indicator: held, not held, facts only, or cannot check. |
-| 14 | Summary | LLM | Rewrites code-built facts into five plain-language parts. An optional rule check ("Checked by code") rejects a report that uses verdict words, technical words, unknown places or numbers, or contradicts SHACL; a rejected report is replaced by a fixed template. |
+| 11 | **SHACL** | pyshacl (Python library), called from `loop_check.py` | Python only changes the format: the returned rows become a small graph, in whatever order they came (no sorting, no origin; account background is kept alongside, not in the graph). Then the rules in `validation/shapes/t0039.shapes.ttl` derive the time order from the timestamps (earlier, next, position; ties by transaction id) and check the structure: each payment starts where the previous one went, and the last returns to where the first started. |
+| 12 | Verdicts | Python (`indicators.py`) | For each indicator: held, not held, facts only, or cannot check. |
+| 13 | Summary | LLM | Rewrites code-built facts into five plain-language parts. An optional rule check ("Checked by code") rejects a report that uses verdict words, technical words, unknown places or numbers, or contradicts SHACL; a rejected report is replaced by a fixed template. |
 
 ### Who does what
 
-- **The model** does three things: reads the question to pick the technique (step 3), writes the SPARQL (step 7), and phrases the summary (step 14).
+- **The model** does three things: reads the question to pick the technique (step 3), writes the SPARQL (step 7), and phrases the summary (step 13).
 - **Ontop (OBDA)** turns SPARQL into SQL and runs it (steps 5, 9, 10). It reads the ontology and mapping when it starts, then answers each query from the expanded mapping. It does not load the data into a graph.
 - **Python and SHACL** do everything else, including all verdicts. The Python is in `src/` (plain functions, no model involved); the SHACL rules are data in `validation/`, run by the pyshacl library.
 
@@ -98,9 +97,9 @@ SETUP.md        how to get the demo running (LLM, Ontop, database)
 | `prompt.py` | 7 | The prompt that makes the model write SPARQL; the prompt version is saved with every run. |
 | `sparql_guard.py` | 8 | Checks the model's SPARQL before it reaches Ontop. |
 | `data_ontology.py`, `ontop_run.py` | 9, 10 | Builds the ontology file Ontop is given, calls Ontop, and returns the rows and the SQL it wrote. |
-| `pivot.py`, `pipeline.py`, `loop_check.py` | 11, 12 | Turns the rows into a candidate chain and checks it with SHACL (pyshacl). |
-| `indicators.py` | 13 | Gives each indicator its answer: held, not held, facts only, or cannot check. |
-| `summarize.py` | 14 | Builds the facts, asks the model to phrase them in five parts, and runs the optional rule check. |
+| `pipeline.py`, `loop_check.py` | 11 | Reads the rows, turns them into a small graph, and checks it with SHACL (pyshacl), which also derives the time order. |
+| `indicators.py` | 12 | Gives each indicator its answer: held, not held, facts only, or cannot check. |
+| `summarize.py` | 13 | Builds the facts, asks the model to phrase them in five parts, and runs the optional rule check. |
 | `baseline.py` | | The "Without ontology" side: the model sees only the table rows. |
 | `llm.py` | | A small client for any LLM with an OpenAI-compatible chat API. It reads the key and model from `.env`; no key is in the code. |
 | `flow_view.py`, `graph_view.py` | | The flow diagram and the graph the page draws while a question runs. |
@@ -110,7 +109,7 @@ Also in `src/`, not on the page's path:
 
 - `gold_build.py`, `gold_build_f3.py`, `gold_selftest.py`, `gold_selftest_f3.py`, `judge.py`, `queries.py`: build the gold cases, check them through Ontop, and compare a run with the gold. `pipeline.py` can run the back half of the chain with the gold SPARQL standing in for the model.
 - `try_model.py`: a small trial of the model writing queries (saved under `generated/`; not a measurement).
-- `unified.py`, `typology_ontop.py`, `build_amltrix_mapping.py`: an alternative "intent only" mode (one virtual graph over the typology and the transaction data) and the Ontop reading of the typology. The page does not offer that mode.
+- `unified.py`, `pivot.py`, `typology_ontop.py`, `build_amltrix_mapping.py`: an alternative "intent only" mode (one virtual graph over the typology and the transaction data) and the Ontop reading of the typology. The page does not offer that mode.
 
 ## Example: T0039 Circular Transactions
 
