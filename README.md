@@ -58,7 +58,7 @@ Layers 2 to 5 are the semantic and data-access layers. Every path is defined onc
 |---|---|---|
 | 1 External knowledge | The AML typology (schema and data) as published | `ontology/amlo.ttl`, `data/amltrix.ttl`, `ontology/external/amltrix/typology_adapter.ttl` |
 | 2 AML core ontology | AML terms (transfer, account, originator, beneficiary, ...), independent of any database | `ontology/core/aml_core.ttl` |
-| 3 Requirements | What each indicator needs (`needsTerm`), what is background only (`backgroundTerm`), where it is recorded (`recordedIn`) | `ontology/application/typology_requirements.ttl` |
+| 3 Typology-concept mapping (typology requirements) | What each indicator needs (`needsTerm`), what is background only (`backgroundTerm`), where it is recorded (`recordedIn`) | `ontology/application/typology_requirements.ttl` |
 | 4 Data semantics | The database's own terms, and the bridge from AML terms to them (`fcd:fromAccount` is a `amd:originator`) | `ontology/alignment/source_vocabulary.ttl`, `ontology/alignment/aml_data_alignment.ttl` |
 | 5 OBDA mapping | Table and column to term (R2RML), plus the Ontop view and connection settings | `mappings/transaction/`, `mappings/customer/`, `mappings/lenses/`, `config/ontop/` |
 | 6 Validation | SHACL rules and the indicator registry | `validation/shapes/`, `validation/indicator_registry.json` |
