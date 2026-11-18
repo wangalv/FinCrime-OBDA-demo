@@ -1,4 +1,4 @@
-# AML OBDA Demo
+# AML Ontology-Based Data Access Demo
 
 An experiment in answering an investigator's question about flagged transactions with LLM that only writes **SPARQL**, over terms from an ontology. A deterministic engine (**Ontop**) rewrites that SPARQL into SQL using an ontology and an R2RML mapping, runs it on the transaction database, and **SHACL plus plain code** decide the verdicts. The model never writes SQL and never decides a verdict.
 
