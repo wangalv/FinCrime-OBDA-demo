@@ -213,11 +213,11 @@ def steps(question, mode="model", model=llm.DEFAULT_MODEL, temperature=0.3, summ
             context = pipeline.parse_context(ctx["rows"])
         except (pipeline.MissingColumns, ValueError, KeyError) as e:
             notes.append(f"the account-background query returned unusable rows ({str(e)[:80]}); background not shown")
-    yield t, ev("Code built the candidate loop: sorted by time, origin = first payer", obda="SHACL check", sql="Rows", role=main, stage="candidate")
+    yield t, ev("Python put the payments into one candidate graph (unordered); SHACL derives the time order", obda="SHACL check", sql="Rows", role=main, stage="candidate")
     rep = indicators.report(legs)
     t["answer"] = {"asked": ids, "missing_ids": sorted(set(ids) - {x["tx_id"] for x in legs}), "legs": legs, "order": rep["order"],
                    "indicators": rep["indicators"], "context": context, "question": question, "technique": technique_for_report(t)}
-    g, _ = loop_check.assemble(legs)
+    g = loop_check.assemble(legs)
     g.bind("ex", "https://example.org/rules#")
     t["candidate_turtle"] = g.serialize(format="turtle")
     e1 = next(e for e in rep["indicators"] if e["id"] == "IND02191")

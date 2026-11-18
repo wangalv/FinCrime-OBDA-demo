@@ -65,6 +65,26 @@ class AgainstGold(unittest.TestCase):
             self.assertEqual(set(out["failed"]), set(gv["failed"]), c["id"])
             self.assertEqual(out["order"], gv["order"], c["id"])
 
+    def test_the_time_order_comes_from_shacl_not_from_the_order_the_rows_arrive_in(self):
+        """The rows are handed over in every order. Nothing in code sorts them, so the verdict and the derived order must not change."""
+        import itertools
+        rules = set(BY_ID["IND02191"]["rules"])
+        for c in CASES:
+            rows = c["gold_rows"]
+            if len(rows) > 4:
+                continue
+            for perm in itertools.permutations(rows):
+                out = loop_check.check(list(perm), rules)
+                self.assertEqual(out["order"], c["gold_verdict"]["order"], c["id"])
+                self.assertEqual(set(out["failed"]), set(c["gold_verdict"]["failed"]), c["id"])
+
+    def test_equal_timestamps_are_ordered_by_tx_id(self):
+        legs = [{"tx_id": 9, "ts": "2022-01-01T10:00:00", "from": "B", "to": "A"},
+                {"tx_id": 5, "ts": "2022-01-01T10:00:00", "from": "A", "to": "B"}]
+        out = loop_check.check(legs, set(BY_ID["IND02191"]["rules"]))
+        self.assertEqual(out["order"], [5, 9])
+        self.assertTrue(out["structure_matches"])
+
     def test_ind02195_reports_facts_matching_a_plain_count(self):
         for c in CASES:
             rows = rows_with_bank(c)

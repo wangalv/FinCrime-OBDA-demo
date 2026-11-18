@@ -49,10 +49,8 @@ BUSINESS_LABEL = {
 }
 # the rules of IND02191 in business words, and where each comes from
 RULE_TEXT = {
-    "first_leg_starts_at_origin": ("the first payment starts at the origin account", "from the typology wording"),
-    "last_leg_returns_to_origin": ("the last payment returns to the origin account", "from the typology wording"),
+    "last_leg_returns_to_origin": ("the last payment returns to the account the first payment started from", "from the typology wording"),
     "consecutive_legs_connect": ("each payment starts from the account the previous payment went to", "our reading of the wording"),
-    "legs_in_time_order": ("the payments follow each other in time", "a rule we added"),      # only named when it fails: the payments are put in time order before the checks, so it holds by construction
     "at_least_2_accounts": ("more than one account is involved", "our reading of the wording"),
 }
 STATE_TEXT = {"held": "the structure matches the description", "not_held": "the structure does not match the description",
@@ -145,7 +143,7 @@ def sections_facts(ans, names):
     e1 = byid.get("IND02191")
     if e1:
         failed = set(e1.get("failed") or [])
-        ok = [RULE_TEXT[r] for r in RULE_TEXT if r not in failed and r != "legs_in_time_order"]
+        ok = [RULE_TEXT[r] for r in RULE_TEXT if r not in failed]
         bad = [RULE_TEXT[r] for r in RULE_TEXT if r in failed]
         if e1["state"] in ("held", "not_held"):
             c.append("The payments were first put in the order they happened (by time), and then checked as a chain, because the money can only have gone round in that order (a rule we added).")

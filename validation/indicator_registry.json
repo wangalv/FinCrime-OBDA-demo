@@ -26,11 +26,8 @@
       "shape": "ex:CircularTransactionShape",
       "shape_status": "runnable, checked against 19 gold cases",
       "rules": [
-        "origin_named",
-        "first_leg_starts_at_origin",
         "last_leg_returns_to_origin",
         "consecutive_legs_connect",
-        "legs_in_time_order",
         "at_least_2_accounts",
         "business_rationale_recorded"
       ],
@@ -149,14 +146,6 @@
     }
   ],
   "rule_info": {
-    "origin_named": {
-      "source": "structure",
-      "text": "The candidate names the account where the funds start (the first leg's payer)."
-    },
-    "first_leg_starts_at_origin": {
-      "source": "text",
-      "text": "The first leg starts at the origin account."
-    },
     "last_leg_returns_to_origin": {
       "source": "text",
       "text": "The last leg ends at the origin account: the funds revert to where they started."
@@ -164,10 +153,6 @@
     "consecutive_legs_connect": {
       "source": "read",
       "text": "Each leg pays from the account the previous leg paid to."
-    },
-    "legs_in_time_order": {
-      "source": "added",
-      "text": "Legs are in time order (kept by decision, not in the typology text)."
     },
     "at_least_2_accounts": {
       "source": "read",

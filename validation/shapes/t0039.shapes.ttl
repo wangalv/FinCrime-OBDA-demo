@@ -21,15 +21,45 @@
 #   - no minimum number of legs and no "each account pays once": the typology gives no number (decision 2026-11-08);
 #     "multiple accounts" is read as more than one account
 #   - rule ids added to every message
+#   - (2026-11-18) the order of the legs is no longer set by code. The legs arrive unordered; the SHACL rules on
+#     ex:LegShape derive "before", "next" and the position (ex:seq) from the timestamps (ties: lower tx id first).
+#     That ordering is [added], a decision of this project. With it the first leg, the last leg and the origin are defined
+#     by the data, so the rules origin_named, first_leg_starts_at_origin and legs_in_time_order (which held by construction
+#     when code did the sorting) are gone.
 # Business rationale: the shape cannot decide it; it can only warn when a record claims one.
 
 ex: sh:declare [ sh:prefix "ex" ; sh:namespace "https://example.org/rules#"^^xsd:anyURI ] .
 
 # ---------------------------------------------------------------- one leg
+# [added] Time order. The legs of a candidate arrive in any order. Three rules derive the order from the data:
+#   ex:before  a leg happened earlier than another leg of the same candidate (equal timestamps: lower tx id first;
+#              the data has minute resolution)
+#   ex:next    the leg that comes directly after (nothing in between)
+#   ex:seq     the position, 1 for the earliest
 ex:LegShape a sh:NodeShape ;
     sh:targetClass ex:Leg ;
-    sh:property [ sh:path ex:seq ; sh:datatype xsd:integer ; sh:minInclusive 1 ; sh:minCount 1 ; sh:maxCount 1 ;
-                  sh:message "[leg_complete] A leg needs its position in the chain (ex:seq, an integer from 1)." ] ;
+    sh:rule [ a sh:SPARQLRule ; sh:order 1 ; sh:prefixes ex: ;
+              sh:construct """
+                CONSTRUCT { $this ex:before ?other } WHERE {
+                    ?c ex:leg $this , ?other .
+                    $this ex:at ?t1 ; ex:txId ?i1 .
+                    ?other ex:at ?t2 ; ex:txId ?i2 .
+                    FILTER (?t1 < ?t2 || (?t1 = ?t2 && ?i1 < ?i2))
+                }""" ] ;
+    sh:rule [ a sh:SPARQLRule ; sh:order 2 ; sh:prefixes ex: ;
+              sh:construct """
+                CONSTRUCT { $this ex:next ?b } WHERE {
+                    $this ex:before ?b .
+                    FILTER NOT EXISTS { $this ex:before ?m . ?m ex:before ?b }
+                }""" ] ;
+    sh:rule [ a sh:SPARQLRule ; sh:order 3 ; sh:prefixes ex: ;
+              sh:construct """
+                CONSTRUCT { $this ex:seq ?n } WHERE {
+                    { SELECT (COUNT(?x) AS ?k) WHERE { ?x ex:before $this } }
+                    BIND (?k + 1 AS ?n)
+                }""" ] ;
+    sh:property [ sh:path ex:txId ; sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "[leg_complete] A leg needs its transaction id." ] ;
     sh:property [ sh:path ex:from ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
                   sh:message "[leg_complete] A leg needs exactly one paying account." ] ;
     sh:property [ sh:path ex:to ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
@@ -50,27 +80,18 @@ ex:CircularTransactionShape a sh:NodeShape ;
     ex:underTactic         amx:ML.TA0007 ; # Layering
     rdfs:comment "Structural reading of IND02191. It cannot judge intent: whether the cycle lacks a business rationale is for the investigator." ;
 
-    sh:property [ sh:path ex:origin ; sh:nodeKind sh:IRI ; sh:minCount 1 ; sh:maxCount 1 ;
-                  sh:message "[origin_named] A loop candidate names the account where the funds start (ex:origin)." ] ;
-
-    # [text] "revert to the same origin": first leg starts at the origin, last leg ends there
+    # [text] "revert to the same origin": the first leg in time starts where the last leg in time ends.
+    # The origin is not stored: it is the payer of the earliest leg.
     sh:sparql [
         a sh:SPARQLConstraint ; sh:prefixes ex: ;
-        sh:message "[first_leg_starts_at_origin] The first leg must start at the origin account." ;
+        sh:message "[last_leg_returns_to_origin] The last leg must end at the origin account (the payer of the first leg): the funds must return to where they started." ;
         sh:select """
             SELECT $this ?value WHERE {
-                $this ex:origin ?o ; ex:leg ?l .
-                ?l ex:seq 1 ; ex:from ?value .
-                FILTER (?value != ?o)
-            }""" ] ;
-    sh:sparql [
-        a sh:SPARQLConstraint ; sh:prefixes ex: ;
-        sh:message "[last_leg_returns_to_origin] The last leg must end at the origin account: the funds must return to where they started." ;
-        sh:select """
-            SELECT $this ?value WHERE {
-                $this ex:origin ?o ; ex:leg ?last .
-                ?last ex:seq ?s ; ex:to ?value .
-                FILTER NOT EXISTS { $this ex:leg ?later . ?later ex:seq ?s2 . FILTER (?s2 > ?s) }
+                $this ex:leg ?first , ?last .
+                FILTER NOT EXISTS { ?x ex:before ?first }
+                FILTER NOT EXISTS { ?last ex:before ?y }
+                ?first ex:from ?o .
+                ?last ex:to ?value .
                 FILTER (?value != ?o)
             }""" ] ;
 
@@ -80,22 +101,10 @@ ex:CircularTransactionShape a sh:NodeShape ;
         sh:message "[consecutive_legs_connect] Consecutive legs must connect: a leg starts at the account the previous leg paid to." ;
         sh:select """
             SELECT $this ?value WHERE {
-                $this ex:leg ?a , ?b .
-                ?a ex:seq ?s1 ; ex:to ?value .
-                ?b ex:seq ?s2 ; ex:from ?f .
-                FILTER (?s2 = ?s1 + 1 && ?value != ?f)
-            }""" ] ;
-
-    # [added] the funds move forward in time (equal timestamps pass: the data has minute resolution; ties are ordered by tx_id before this check)
-    sh:sparql [
-        a sh:SPARQLConstraint ; sh:prefixes ex: ;
-        sh:message "[legs_in_time_order] Legs must be in time order: a leg cannot happen before the one it follows." ;
-        sh:select """
-            SELECT $this ?value WHERE {
-                $this ex:leg ?a , ?b .
-                ?a ex:seq ?s1 ; ex:at ?t1 .
-                ?b ex:seq ?s2 ; ex:at ?value .
-                FILTER (?s2 = ?s1 + 1 && ?value < ?t1)
+                $this ex:leg ?a .
+                ?a ex:next ?b ; ex:to ?value .
+                ?b ex:from ?f .
+                FILTER (?value != ?f)
             }""" ] ;
 
     # [read] "across multiple accounts": the pattern involves more than one account. The typology gives no number, so no

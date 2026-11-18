@@ -3,7 +3,7 @@
 Run with the project venv:  .venv/bin/python src/loop_check.py   (checks all gold cases)
 
 assemble(rows)  rows = list of dicts {tx_id, ts (ISO string), from, to, same_bank (optional), amount_log (optional)}, e.g. what Ontop returns.
-                Code, not the model, sorts the legs by (ts, tx_id) and sets the origin to the first leg's payer.
+                Puts the legs into a graph as they came. It does not sort them and names no origin: SHACL derives the order.
 check(rows)     builds the RDF candidate, validates it with pyshacl against validation/shapes/t0039.shapes.ttl and returns
                 {"structure_matches": bool, "failed": [rule ids], "warnings": [rule ids], "order": [tx_ids]}.
 """
@@ -29,18 +29,16 @@ _shapes = None
 
 
 def assemble(rows):
-    """Return (graph, ordered tx ids). The candidate node is ex:candidate."""
-    legs = sorted(rows, key=lambda r: (r["ts"], r["tx_id"]))
+    """Return the candidate graph (ex:candidate). The legs go in as they came: no sorting, no position, no origin.
+    The order is derived by SHACL rules (validation/shapes/t0039.shapes.ttl, ex:LegShape) from the timestamps."""
     g = Graph()
     cand = URIRef("https://example.org/candidate")
     g.add((cand, RDF.type, EX.LoopCandidate))
-    if legs:
-        g.add((cand, EX.origin, URIRef(ACCOUNT + legs[0]["from"])))
-    for i, r in enumerate(legs, start=1):
+    for r in rows:
         leg = URIRef(TX + str(r["tx_id"]))
         g.add((cand, EX.leg, leg))
         g.add((leg, RDF.type, EX.Leg))
-        g.add((leg, EX.seq, Literal(i, datatype=XSD.integer)))
+        g.add((leg, EX.txId, Literal(int(r["tx_id"]), datatype=XSD.integer)))
         g.add((leg, EX["from"], URIRef(ACCOUNT + r["from"])))
         g.add((leg, EX.to, URIRef(ACCOUNT + r["to"])))
         g.add((leg, EX.at, Literal(r["ts"], datatype=XSD.dateTime)))
@@ -48,16 +46,17 @@ def assemble(rows):
             g.add((leg, EX.amountLog, Literal(float(r["amount_log"]), datatype=XSD.double)))
         if r.get("same_bank") is not None:
             g.add((leg, EX.sameBank, Literal(bool(r["same_bank"]), datatype=XSD.boolean)))
-    return g, [r["tx_id"] for r in legs]
+    return g
 
 
 def check(rows, rules=None):
-    """rules: optional set of rule ids to keep (one indicator's rules, see validation/indicator_registry.json); default all."""
+    """rules: optional set of rule ids to keep (one indicator's rules, see validation/indicator_registry.json); default all.
+    "order" is the tx ids by the position (ex:seq) the SHACL rules derived, not by anything code sorted."""
     global _shapes
     if _shapes is None:
         _shapes = Graph().parse(SHAPES)
-    g, order = assemble(rows)
-    conforms, rgraph, _ = validate(g, shacl_graph=_shapes, inference="none", advanced=True)
+    g = assemble(rows)
+    conforms, rgraph, _ = validate(g, shacl_graph=_shapes, inference="none", advanced=True, inplace=True)
     failed, warnings = set(), set()
     for res in rgraph.subjects(RDF.type, SH.ValidationResult):
         msg = str(rgraph.value(res, SH.resultMessage))
@@ -67,6 +66,8 @@ def check(rows, rules=None):
         if rules is not None and rule not in rules:
             continue
         (warnings if sev == SH.Warning else failed).add(rule)
+    pos = {str(l).rsplit("/", 1)[1]: int(n) for l, n in g.subject_objects(EX.seq)}
+    order = [int(t) for t in sorted(pos, key=lambda t: pos[t])]
     return {"structure_matches": not failed, "failed": sorted(failed), "warnings": sorted(warnings), "order": order}
 
 
